@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission Control | 1-Week Learning Plan</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Vercel/Linear inspired Dark Theme */
+            --bg-base: #09090b; /* Zinc 950 */
+            --bg-surface: #18181b; /* Zinc 900 */
+            --bg-surface-hover: #27272a; /* Zinc 800 */
+            --bg-surface-active: #3f3f46; /* Zinc 700 */
+            
+            --border-color: #27272a;
+            --border-hover: #3f3f46;
+            
+            --text-main: #f4f4f5; /* Zinc 50 */
+            --text-muted: #a1a1aa; /* Zinc 400 */
+            --text-dark: #52525b; /* Zinc 600 */
+            
+            --accent: #6366f1; /* Indigo 500 */
+            --accent-glow: rgba(99, 102, 241, 0.2);
+            --accent-muted: #818cf8; /* Indigo 400 */
+            
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Subtle Dot Matrix Pattern */
+        .bg-pattern {
+            background-color: var(--bg-base);
+            background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+            background-size: 24px 24px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background: rgba(9, 9, 11, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .xp-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent-muted);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 0 15px var(--accent-glow);
+            transition: transform 0.2s ease;
+        }
+
+        .xp-badge:hover {
+            transform: scale(1.05);
+        }
+
+        .progress-track {
+            height: 2px;
+            background: var(--border-color);
+            width: 100%;
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 32px 16px 80px 16px;
+            flex: 1;
+            width: 100%;
+        }
+
+        .intro-container {
+            margin-bottom: 32px;
+        }
+        .intro-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.03em;
+        }
+        .intro-text {
+            font-size: 16px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .tabs-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap; /* Shows all tabs instantly, no hidden scrolling */
+            padding: 4px;
+            margin: 0 0 28px 0;
+        }
+        
+        .tab-btn {
+            display: flex;
+            flex: 1 1 auto; /* Allows buttons to stretch and fill empty space */
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            background: var(--bg-surface-hover);
+            color: var(--text-main);
+        }
+        .tab-btn.active {
+            background: var(--bg-surface);
+            border-color: var(--accent);
+            color: var(--text-main);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .role-subtitle {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dark);
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-left: 4px;
+        }
+
+        .task-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        .task-card:hover {
+            border-color: var(--border-hover);
+        }
+        .task-card.completed {
+            background: rgba(24, 24, 27, 0.4);
+            border-color: var(--border-color);
+        }
+
+        .task-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-container {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            margin-top: 2px;
+            position: relative;
+        }
+        .custom-checkbox {
+            width: 100%;
+            height: 100%;
+            border-radius: 6px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-base);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .task-card:hover .custom-checkbox:not(.checked) {
+            border-color: var(--text-dark);
+        }
+        .custom-checkbox.checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .check-svg {
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: white;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 24;
+            stroke-dashoffset: 24;
+            transition: stroke-dashoffset 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .custom-checkbox.checked .check-svg {
+            stroke-dashoffset: 0;
+        }
+
+        .task-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .task-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+            transition: color 0.2s ease;
+        }
+        .task-card.completed .task-title {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+        .task-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        
+        .code-tag {
+            background: #27272a;
+            color: #f472b6; /* Pink 400 */
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: var(--font-mono);
+            border: 1px solid #3f3f46;
+        }
+
+        .expand-btn {
+            color: var(--text-dark);
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .expand-btn:hover {
+            background: var(--bg-surface-hover);
+            color: var(--text-main);
+        }
+        .expand-btn svg {
+            transition: transform 0.3s ease;
+        }
+        .expand-btn.open svg {
+            transform: rotate(180deg);
+            color: var(--accent);
+        }
+
+        .task-breakdown {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease;
+            background: #000000;
+            border-top: 1px solid transparent;
+        }
+        .task-card.expanded .task-breakdown {
+            grid-template-rows: 1fr;
+            border-top-color: var(--border-color);
+        }
+        .breakdown-inner {
+            overflow: hidden;
+        }
+        .breakdown-content {
+            padding: 20px;
+            font-size: 14.5px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            border-left: 2px solid var(--accent);
+            margin: 16px;
+            background: var(--bg-surface);
+            border-radius: 0 8px 8px 0;
+        }
+        .breakdown-content strong, .breakdown-content b {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        .breakdown-bullet {
+            margin-left: 12px;
+            margin-bottom: 8px;
+            position: relative;
+        }
+        .breakdown-bullet::before {
+            content: "•";
+            position: absolute;
+            left: -12px;
+            color: var(--accent-muted);
+        }
+
+        .out-of-scope {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+        .out-of-scope-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #f87171;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .out-of-scope-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fca5a5;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .out-of-scope-item span {
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+
+        /* Icons */
+        .icon {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-pattern">
+        
+        <nav class="navbar">
+            <div class="nav-brand">
+                <svg class="icon" style="color: var(--accent);" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                <span>Mission Control</span>
+            </div>
+            <div class="xp-badge" id="xp-counter">
+                <svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                <span>0 XP</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-bar"></div>
+            </div>
+        </nav>
+
+        <main>
+            <div class="intro-container">
+                <h1 class="intro-title" id="intro-title">Mission Briefing</h1>
+                <p class="intro-text" id="intro-text">Loading...</p>
+            </div>
+
+            <div class="tabs-container" id="tabs-container">
+                <!-- Tabs injected by JS -->
+            </div>
+
+            <div class="role-subtitle" id="role-subtitle">
+                <!-- Subtitle injected by JS -->
+            </div>
+
+            <div id="tasks-container">
+                <!-- Tasks injected by JS -->
+            </div>
+
+            <div id="out-of-scope-container">
+                <!-- Out of scope injected by JS -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Expanded, highly detailed curriculum data
+        const curriculumData = {
+            intro: {
+                title: "Mission Briefing: The Scope Rule",
+                text: "A week is enough to get you from absolute zero to genuinely useful on ONE specific workstream. If it isn't something you will actually touch in this specific codebase, do not waste time learning it. Master the fundamentals below, earn XP, and don't panic."
+            },
+            roles: [
+                {
+                    id: "all",
+                    icon: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>',
+                    title: "0. Base Camp",
+                    subtitle: "Mandatory for everyone (Half a day max)",
+                    tasks: [
+                        { 
+                            id: "all_1", 
+                            title: "Git essentials: Clone, Branch, Commit, PRs & Conflicts.",
+                            text: "Six people committing to one repo without this will lose more time than the whole rest of this plan saves.",
+                            beginnerDetails: [
+                                "**Think of Git as a Time Machine & Save System for your code.** Instead of naming files `project_final_v3.zip`, Git tracks exactly which lines of text changed.",
+                                "• **Clone:** Downloading the master copy of the project to your computer.",
+                                "• **Branch:** Creating a parallel universe. You can experiment safely here without breaking the main code.",
+                                "• **Commit & Push:** 'Saving' your changes and uploading them to the cloud (GitHub).",
+                                "• **Pull Request (PR):** Asking the team 'Hey, can we merge my parallel universe back into the main project?'",
+                                "• **Merge Conflict:** When two people edit the exact same line of code. Git pauses and asks a human to pick the winner."
+                            ]
+                        },
+                        { 
+                            id: "all_2", 
+                            title: "Command line & virtual environments (venv).",
+                            text: "Navigating folders, running Python scripts, activating venvs.",
+                            beginnerDetails: [
+                                "**The Terminal (or Command Prompt) is just a way to talk to your computer using text instead of clicking a mouse.** It looks scary, but it's just faster.",
+                                "• **`cd` (change directory):** Like double-clicking a folder to open it.",
+                                "• **`ls` or `dir`:** Listing all files in your current folder.",
+                                "• **`venv` (Virtual Environment):** Imagine a soundproof room for your code. It keeps the tools you install for *this* project from messing up other Python projects on your computer."
+                            ]
+                        },
+                        { 
+                            id: "all_3", 
+                            title: "The REST API mental model.",
+                            text: "Understand GET/POST requests, JSON data structures, and Status Codes.",
+                            beginnerDetails: [
+                                "**REST APIs are how apps talk to each other over the internet. Imagine a restaurant:**",
+                                "• **GET Request:** You (the app) asking the waiter (the API) for the menu.",
+                                "• **POST Request:** Giving the waiter your completed order form to submit to the kitchen.",
+                                "• **JSON:** The format the menu is written in. It looks like a simple text list with labels (e.g., `\"food\": \"burger\"`).",
+                                "• **200 OK:** The waiter brings your food. Success!",
+                                "• **404 Not Found:** You ordered a dish that doesn't exist.",
+                                "• **500 Server Error:** The kitchen caught on fire. (Not your fault)."
+                            ]
+                        },
+                        { 
+                            id: "all_4", 
+                            title: "Environment Variables (.env) & Secrets.",
+                            text: "How to store API keys without uploading them to GitHub.",
+                            beginnerDetails: [
+                                "**Never, ever type passwords or API keys directly into your code.** If you upload a database password to GitHub, bots will steal it in 3 seconds.",
+                                "• **`.env` File:** A hidden text file on your computer that acts as a safe. You write `MAPBOX_KEY=12345` inside it.",
+                                "• **`.gitignore`:** A list telling Git 'Do NOT upload these files'. Your `.env` file must always be listed here so hackers don't steal your keys!"
+                            ]
+                        },
+                        {
+                            id: "all_5",
+                            title: "Basic Markdown (.md) for Documentation.",
+                            text: "How to format text for READMEs and PR descriptions.",
+                            beginnerDetails: [
+                                "**Markdown is a way to write formatted text without touching a mouse.** You are reading Markdown right now!",
+                                "• Use `#` for large titles and `##` for subtitles.",
+                                "• Wrap words in `**` to make them **bold**.",
+                                "• Use backticks (`) around code to make it look like `this`.",
+                                "• A good README is the difference between a hackathon project that gets ignored and one that wins."
+                            ]
+                        }
+                    ],
+                    skip: []
+                },
+                {
+                    id: "data",
+                    icon: '<ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>',
+                    title: "A. Data & Ingestion",
+                    subtitle: "Processing NASA & Map Data",
+                    tasks: [
+                        { 
+                            id: "dat_1", 
+                            title: "Python fundamentals.",
+                            text: "Functions, dictionaries/lists, list comprehensions, and try/except blocks.",
+                            beginnerDetails: [
+                                "**Python is the language we use to grab and clean data. It reads almost like plain English.**",
+                                "• **Variables & Lists:** Boxes to hold data, and ordered shelves to hold multiple boxes.",
+                                "• **Dictionaries:** Like a labeled phonebook (Name -> Number). Perfect for processing JSON.",
+                                "• **try/except:** A safety net. 'Try to download this file. If the internet drops, print an error instead of crashing the whole program.'"
+                            ]
+                        },
+                        { 
+                            id: "dat_2", 
+                            title: "The `requests` library & Pagination.",
+                            text: "Making GET requests to NASA APIs, handling timeouts, and looping through pages.",
+                            beginnerDetails: [
+                                "**If the API is a restaurant, the `requests` library is the phone you use to call them.**",
+                                "• `requests.get('url')` reaches out to the internet to grab data.",
+                                "• **Timeouts:** Always tell the phone to hang up if nobody answers after 10 seconds, otherwise your code freezes.",
+                                "• **Pagination:** NASA won't give you 10,000 fires at once. They give you 'Page 1' (100 fires) and a link to 'Page 2'. You need a `while` loop to keep asking for the next page until they run out."
+                            ]
+                        },
+                        { 
+                            id: "dat_3", 
+                            title: "Pandas & Data Cleaning (Handling NaNs).",
+                            text: "Filtering rows, merging tables, reading CSV files, and dropping nulls.",
+                            beginnerDetails: [
+                                "**Pandas is basically Microsoft Excel running on steroids inside Python.**",
+                                "Instead of clicking to sort a column, you write one line of code to instantly filter a spreadsheet with 10 million rows. A **DataFrame** is just the Pandas word for a 'table'.",
+                                "• **Data Cleaning:** Real world data is messy. If a temperature sensor breaks, it sends a blank value (NaN). You must learn `.dropna()` or `.fillna()` so the math doesn't break downstream."
+                            ]
+                        },
+                        { 
+                            id: "dat_4", 
+                            title: "GeoPandas & CRS (Crucial).",
+                            text: "Geometry columns, reading GeoJSON, and CRS conversions.",
+                            beginnerDetails: [
+                                "**GeoPandas is Pandas, but it understands geography and maps.**",
+                                "• **Geometry Column:** Instead of just knowing 'Row 1 has numbers', it knows 'Row 1 is the physical polygon outline of a factory in Paris'.",
+                                "• **CRS (Coordinate Reference System):** The Earth is round, but maps are flat. You cannot measure distance in 'Lat/Lon Degrees'. You must use `.to_crs()` to convert degrees into meters before calculating how big a wildfire is."
+                            ]
+                        }
+                    ],
+                    skip: ["Full GIS software (QGIS)", "Satellite imagery/raster processing (Sentinel data)"]
+                },
+                {
+                    id: "ml",
+                    icon: '<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"></path><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"></path>',
+                    title: "B. Analysis Engine",
+                    subtitle: "Machine Learning Layer",
+                    tasks: [
+                        { 
+                            id: "ml_1", 
+                            title: "Clustering vs. Anomaly Detection.",
+                            text: "Understand the vocabulary of what models do.",
+                            beginnerDetails: [
+                                "• **Clustering (DBSCAN):** Finding groups. 'Group all the individual fire dots that are close together into one giant wildfire zone.'",
+                                "• **Anomaly Detection:** Finding weirdness. '99% of factories operate on a schedule. This one is behaving totally differently. Flag it.'"
+                            ]
+                        },
+                        { 
+                            id: "ml_2", 
+                            title: "DBSCAN Clustering specifics.",
+                            text: "Understand `eps` and `min_samples`. Know why '-1' noise labels must be excluded.",
+                            beginnerDetails: [
+                                "**DBSCAN is an algorithm that groups dots together on a map based on how close they are.**",
+                                "• **`eps`:** The maximum distance allowed between dots to group them together.",
+                                "• **`min_samples`:** The minimum number of dots needed to call it a 'group'.",
+                                "• **The -1 Label:** When DBSCAN finds a dot completely alone, it labels it '-1' (noise). We must delete these, or our app will think random, single brush-fires are permanent factories!"
+                            ]
+                        },
+                        { 
+                            id: "ml_3", 
+                            title: "Haversine Distance.",
+                            text: "Why `eps` needs to be mathematically mapped to a sphere.",
+                            beginnerDetails: [
+                                "Because the Earth is a sphere, you can't just draw a straight line with a ruler on a flat map to measure the exact distance between two GPS coordinates.",
+                                "The **Haversine formula** calculates the true 'as-the-crow-flies' distance across the curve of the Earth. DBSCAN needs this to measure distance accurately."
+                            ]
+                        },
+                        { 
+                            id: "ml_4", 
+                            title: "Precision vs. Recall.",
+                            text: "Translating ML metrics into plain English for humans.",
+                            beginnerDetails: [
+                                "**These tell you how 'good' your AI is.**",
+                                "• **Precision:** If the AI flags 10 things as 'Factories', and 9 of them are actually factories, it has 90% precision. (Low False Positives).",
+                                "• **Recall:** Out of 100 *real* factories in the world, the AI only found 80 of them. It has 80% recall. (Low False Negatives)."
+                            ]
+                        }
+                    ],
+                    skip: ["Deep learning / PyTorch / TensorFlow", "Neural Networks (Overkill for our lightweight scope)"]
+                },
+                {
+                    id: "backend",
+                    icon: '<rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line>',
+                    title: "C. Backend & API",
+                    subtitle: "FastAPI Database Engine",
+                    tasks: [
+                        { 
+                            id: "bac_1", 
+                            title: "FastAPI Basics.",
+                            text: "Path operations, query parameters, Pydantic validation.",
+                            beginnerDetails: [
+                                "**FastAPI is the brain of our server. It receives requests from the frontend, gets data from the database, and sends it back.**",
+                                "**Pydantic** is the bouncer at the door. If a user tries to submit their age as 'Banana', Pydantic stops them and says 'Error: Age must be a number' before it breaks our app."
+                            ]
+                        },
+                        { 
+                            id: "bac_2", 
+                            title: "CORS (Cross-Origin Resource Sharing).",
+                            text: "The #1 reason frontend-backend connections fail.",
+                            beginnerDetails: [
+                                "**CORS is a security feature in browsers.**",
+                                "If your React app runs on `localhost:3000` and asks your FastAPI on `localhost:8000` for data, the browser panics and blocks it, thinking it's a hacker.",
+                                "You must add a `CORSMiddleware` in FastAPI to explicitly say: 'Yes, it is okay for localhost:3000 to talk to me'."
+                            ]
+                        },
+                        { 
+                            id: "bac_3", 
+                            title: "SQLAlchemy ORM.",
+                            text: "Defining models, querying a database using Python objects.",
+                            beginnerDetails: [
+                                "**ORM stands for Object-Relational Mapper. It's a translator.**",
+                                "Instead of writing complex SQL math like `SELECT * FROM fires WHERE heat > 100`, SQLAlchemy lets you write standard Python code like `Fire.query.filter(heat > 100)`.",
+                                "It automatically turns database rows into Python objects you can easily use."
+                            ]
+                        },
+                        { 
+                            id: "bac_4", 
+                            title: "Pytest fundamentals.",
+                            text: "Writing basic assertions and testing endpoints.",
+                            beginnerDetails: [
+                                "**You can't test a giant backend manually by clicking around. You write code to test your code.**",
+                                "**Pytest** runs a script that pretends to be a user, hits your API, and asserts: 'I expect this API to return a 200 OK and a list of 5 fires.' If it returns 4, the test turns red, saving you from deploying a bug."
+                            ]
+                        }
+                    ],
+                    skip: ["User Authentication / JWTs", "Complex database migrations (Alembic)"]
+                },
+                {
+                    id: "frontend",
+                    icon: '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>',
+                    title: "D. Frontend Dashboard",
+                    subtitle: "React & Mapbox UI",
+                    tasks: [
+                        { 
+                            id: "fro_1", 
+                            title: "Modern JavaScript (ES6+).",
+                            text: "Arrow functions, destructuring, and async/await.",
+                            beginnerDetails: [
+                                "**Modern JavaScript shortcuts make code much cleaner.**",
+                                "• **Destructuring:** Grabbing exactly what you need out of an object quickly. `const { name } = user;` instead of `const name = user.name;`",
+                                "• **Async/Await:** When you ask an API for data, it takes time. `await` tells Javascript: 'Pause here and wait for the API to answer before moving to the next line of code.'"
+                            ]
+                        },
+                        { 
+                            id: "fro_2", 
+                            title: "React Fundamentals.",
+                            text: "Components, JSX, `useState`, `useEffect`.",
+                            beginnerDetails: [
+                                "**React lets us build websites like Lego sets.**",
+                                "• **Component:** A reusable Lego block (like a Button or a Custom Map Card).",
+                                "• **JSX:** HTML and Javascript mixed together.",
+                                "• **`useState`:** The app's short-term memory (e.g., remembering if a menu is open).",
+                                "• **`useEffect`:** Triggering an action when something happens (e.g., 'Fetch map data when the page first loads')."
+                            ]
+                        },
+                        { 
+                            id: "fro_3", 
+                            title: "Mapbox GL JS Basics.",
+                            text: "Initializing maps, adding GeoJSON sources, layers, and popups.",
+                            beginnerDetails: [
+                                "**Mapbox is the tool that draws the physical world map on the screen.**",
+                                "• **Source:** The raw data (e.g., A GeoJSON list of coordinates for wildfires).",
+                                "• **Layer:** The paint. You tell Mapbox: 'Take that Source data, and paint it on the screen as glowing red circles'.",
+                                "• **Popups:** The little info bubbles that appear when you click a circle."
+                            ]
+                        },
+                        { 
+                            id: "fro_4", 
+                            title: "Flexbox / CSS Grid Layouts.",
+                            text: "Building the layout structure for the dashboard.",
+                            beginnerDetails: [
+                                "**Flexbox and Grid are the two ways we align things in modern CSS.**",
+                                "• **Flexbox:** Great for arranging items in a single row or single column (like a nav bar).",
+                                "• **Grid:** Great for full-page layouts where you need a sidebar on the left, a map on the right, and a header on top."
+                            ]
+                        }
+                    ],
+                    skip: ["Redux State Management", "Next.js / Server-Side Rendering", "TypeScript (Adds friction for 1-week builds)"]
+                },
+                {
+                    id: "presentation",
+                    icon: '<circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle>',
+                    title: "E. Presentation & Validation",
+                    subtitle: "Pitching & Translation",
+                    tasks: [
+                        { 
+                            id: "pre_1", 
+                            title: "Run Validation Scripts.",
+                            text: "Run Python scripts, read the output, and prove the logic works.",
+                            beginnerDetails: [
+                                "You don't need to write the Machine Learning code, but you must know how to run the `validate.py` script.",
+                                "Judges will ask 'How do you know it works?' You need to confidently pull up the terminal and say, 'Here is the script output validating our accuracy against known NASA datasets.'"
+                            ]
+                        },
+                        { 
+                            id: "pre_2", 
+                            title: "Plain-Language Translation.",
+                            text: "Explaining Precision, Recall, and API structures without jargon.",
+                            beginnerDetails: [
+                                "**Never throw acronyms at a judge.**",
+                                "Instead of saying 'We used DBSCAN with a 0.5 rad EPS', say:",
+                                "'We built an algorithm that clusters individual fire detections into cohesive zones, allowing us to accurately track the actual size of the event rather than just raw thermal anomalies.'"
+                            ]
+                        },
+                        { 
+                            id: "pre_3", 
+                            title: "Live Demo Fallback Planning.",
+                            text: "What to do when the internet dies mid-presentation.",
+                            beginnerDetails: [
+                                "**Hackathon Wi-Fi always fails.** Always.",
+                                "You must have a hardcoded JSON file of your API response ready. If the live API call times out during the demo, your frontend should automatically switch to reading the local JSON file so the map still renders perfectly for the judges."
+                            ]
+                        }
+                    ],
+                    skip: ["Deep diving into code syntax"]
+                }
+            ]
+        };
+
+        let activeTab = "all";
+        let completedTasks = {};
+        
+        // Load from LocalStorage
+        try {
+            const saved = localStorage.getItem('sih26162-vanilla-v1');
+            if (saved) {
+                completedTasks = JSON.parse(saved);
+            }
+        } catch (e) { console.warn("Failed to load progress", e); }
+
+        // DOM Elements
+        const DOM = {
+            introTitle: document.getElementById('intro-title'),
+            introText: document.getElementById('intro-text'),
+            tabsContainer: document.getElementById('tabs-container'),
+            roleSubtitle: document.getElementById('role-subtitle'),
+            tasksContainer: document.getElementById('tasks-container'),
+            outOfScopeContainer: document.getElementById('out-of-scope-container'),
+            xpCounter: document.getElementById('xp-counter').querySelector('span'),
+            progressBar: document.getElementById('progress-bar')
+        };
+
+        // Text formatting helpers
+        function formatText(text) {
+            // Replace backticks with code spans
+            return text.replace(/`([^`]+)`/g, '<span class="code-tag">$1</span>');
+        }
+
+        function formatBeginnerText(text) {
+            let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-tag">$1</span>');
+            return formatted;
+        }
+
+        function updateProgress() {
+            const totalTasks = curriculumData.roles.reduce((acc, role) => acc + role.tasks.length, 0);
+            const completedCount = Object.values(completedTasks).filter(Boolean).length;
+            
+            // Update XP
+            const xp = completedCount * 150;
+            DOM.xpCounter.textContent = `${xp} XP`;
+            
+            // Update Bar
+            const percent = totalTasks === 0 ? 0 : (completedCount / totalTasks) * 100;
+            DOM.progressBar.style.width = `${percent}%`;
+        }
+
+        function render() {
+            // Render Intro
+            DOM.introTitle.textContent = curriculumData.intro.title;
+            DOM.introText.textContent = curriculumData.intro.text;
+
+            // Render Tabs
+            DOM.tabsContainer.innerHTML = curriculumData.roles.map(role => `
+                <button class="tab-btn ${activeTab === role.id ? 'active' : ''}" data-id="${role.id}">
+                    <svg class="icon" viewBox="0 0 24 24">${role.icon}</svg>
+                    ${role.title.split('. ')[1] || role.title}
+                </button>
+            `).join('');
+
+            // Get active role data
+            const activeData = curriculumData.roles.find(r => r.id === activeTab);
+            
+            // Render Subtitle
+            DOM.roleSubtitle.textContent = activeData.subtitle;
+
+            // Render Tasks
+            DOM.tasksContainer.innerHTML = activeData.tasks.map(task => {
+                const isChecked = !!completedTasks[task.id];
+                return `
+                    <div class="task-card ${isChecked ? 'completed' : ''}" data-task-id="${task.id}">
+                        <div class="task-header">
+                            <div class="checkbox-container">
+                                <div class="custom-checkbox ${isChecked ? 'checked' : ''}">
+                                    <svg class="check-svg" viewBox="0 0 24 24">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="task-content">
+                                <div class="task-title">${task.title}</div>
+                                <div class="task-desc">${formatText(task.text)}</div>
+                            </div>
+                            <div class="expand-btn">
+                                <svg class="icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+                        <div class="task-breakdown">
+                            <div class="breakdown-inner">
+                                <div class="breakdown-content">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--accent-muted); font-weight: 600;">
+                                        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M6.34 17.66l-1.41 1.41"></path><path d="M19.07 4.93l-1.41 1.41"></path><circle cx="12" cy="12" r="4"></circle></svg>
+                                        <span>Beginner Breakdown</span>
+                                    </div>
+                                    ${task.beginnerDetails.map(line => {
+                                        if(line.startsWith('•')) {
+                                            return `<div class="breakdown-bullet">${formatBeginnerText(line.substring(2))}</div>`;
+                                        }
+                                        return `<p style="margin-bottom: 12px;">${formatBeginnerText(line)}</p>`;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Render Out of Scope
+            if (activeData.skip.length > 0) {
+                DOM.outOfScopeContainer.style.display = 'block';
+                DOM.outOfScopeContainer.innerHTML = `
+                    <div class="out-of-scope">
+                        <div class="out-of-scope-title">Out of Scope (Do Not Build)</div>
+                        <div style="display: flex; flex-direction: column;">
+                            ${activeData.skip.map(item => `
+                                <div class="out-of-scope-item">
+                                    <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px; opacity: 0.5;"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                    <span>${item}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                DOM.outOfScopeContainer.style.display = 'none';
+                DOM.outOfScopeContainer.innerHTML = '';
+            }
+
+            updateProgress();
+        }
+
+        
+        // Tab clicks
+        DOM.tabsContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.tab-btn');
+            if (btn) {
+                activeTab = btn.getAttribute('data-id');
+                render();
+            }
+        });
+
+        // Task clicks (Checkbox and Accordion)
+        DOM.tasksContainer.addEventListener('click', (e) => {
+            const header = e.target.closest('.task-header');
+            if (!header) return;
+
+            const card = header.closest('.task-card');
+            const taskId = card.getAttribute('data-task-id');
+            const isExpandBtnClick = e.target.closest('.expand-btn');
+
+            if (isExpandBtnClick) {
+                // Toggle expansion
+                card.classList.toggle('expanded');
+                const btn = header.querySelector('.expand-btn');
+                btn.classList.toggle('open');
+            } else {
+                // Toggle completion
+                const isCurrentlyChecked = !!completedTasks[taskId];
+                completedTasks[taskId] = !isCurrentlyChecked;
+                
+                // Save and Re-render (could be optimized to just update DOM, but re-render is safe here)
+                localStorage.setItem('sih26162-vanilla-v1', JSON.stringify(completedTasks));
+                render();
+            }
+        });
+
+        // Initial Load
+        render();
+
+    </script>
+</body>
+</html>

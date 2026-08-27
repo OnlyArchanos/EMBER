@@ -29,23 +29,13 @@ Consistency across files is the single biggest failure mode in multi-session AI-
 
 ### 2.1 Domain entities and their canonical fields
 
-**Fire detection** (`FireDetection`)
-`id`, `latitude`, `longitude`, `brightness`, `frp` (fire radiative power), `acq_date`, `acq_time`, `satellite` (one of `snpp`, `noaa20`, `noaa21`), `confidence`, `fire_type` (one of `industrial`, `wildfire`, `agricultural`, `unclassified`), `state`, `district`, `cluster_id`, `is_persistent`.
+The authoritative, full field-by-field spec lives in **`data-model.md`** — not here. That file is the one that gets updated when a field changes; this file just names the four entities so this glossary stays a table of contents, not a second copy that can go stale: `FireDetection`, `Zone`, `PersistentSource`, `FlaggedCase`.
 
-**Zone** (`Zone`)
-`id`, `zone_type` (one of `industrial`, `forest`, `farmland`), `name`, `geometry`, `source` (always `osm` for now).
-
-**Persistent source** (`PersistentSource`)
-`id`, `cluster_id`, `first_seen`, `last_seen`, `days_active`, `member_count`, `zone_type_at_location` (a `Zone.zone_type` value, or `unclassified`).
-
-**Flagged case** (`FlaggedCase`)
-`id`, `persistent_source_id`, `anomaly_score`, `nearest_zone_type`, `nearest_zone_distance_m`, `status` (one of `open`, `reviewed`, `dismissed`), `case_note`.
-
-Never rename any of the above (e.g. never `fireType`, `type`, `is_active`, `persistent`, `confidenceScore`) — if a name above feels awkward for a particular use, raise it as a proposed contract change (see Section 1, rule 2), don't rename it locally.
+Never rename a field from what `data-model.md` defines (e.g. never `fireType`, `type`, `is_active`, `persistent`, `confidenceScore`) — if a name feels awkward for a particular use, raise it as a proposed contract change (see Section 1, rule 2) and edit `data-model.md`, don't rename it locally.
 
 ### 2.2 API endpoints (canonical, do not add, rename, or restructure without a contract update)
 
-`GET /api/fires`, `GET /api/fires/{fire_id}`, `GET /api/zones`, `GET /api/stats`, `GET /api/flags`, `GET /api/flags/{flag_id}`, `GET /api/health`.
+The authoritative, full endpoint-by-endpoint spec — including query params, request/response shapes, and pagination conventions — lives in **`api-contract.md`**. Read it before writing or calling any route.
 
 ### 2.3 File and module naming conventions
 

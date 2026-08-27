@@ -1,0 +1,47 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# === Environment ===
+.env
+backend/.env
+
+# === SQLite databases ===
+*.db
+*.sqlite3
+
+# === Runtime data directories (seed/ is committed, raw/ and processed/ are not) ===
+backend/data/raw/
+backend/data/processed/
+
+# === ML artifacts (trained models — large binaries, reproduce via train.py) ===
+backend/app/ml/artifacts/*.pkl
+backend/app/ml/artifacts/*.joblib
+backend/app/ml/artifacts/*.json
+!backend/app/ml/artifacts/.gitkeep
+
+# === Node / Frontend ===
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# === IDE / OS ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Logs ===
+*.log

@@ -46,7 +46,8 @@ frontend/src/
   hooks/               data-fetching, kept separate from rendering
 docs/
   architecture.md, api-contract.md, data-model.md   — frozen contracts + design
-  validation-results.md, demo-script.md             — living documents, expect churn
+  build-order.md, validation-results.md, demo-script.md — living documents, expect churn
+  build-order.md tracks exactly which file to prompt for next — check it first
 ```
 
 ## Common commands

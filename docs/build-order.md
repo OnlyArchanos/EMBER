@@ -13,17 +13,17 @@ This is the actual, file-by-file execution order for the solo build. Update the 
 - [x] `api-contract.md`
 
 ## Phase 1 — Backend foundation (nothing else can start before this)
-- [ ] `app/config.py`
-- [ ] `app/database.py`
-- [ ] `app/models.py` — build directly from `data-model.md`, field for field
-- [ ] `app/schemas.py`
+- [x] `app/config.py`
+- [x] `app/database.py`
+- [x] `app/models.py` — build directly from `data-model.md`, field for field
+- [x] `app/schemas.py`
 
 ## Phase 2 — Ingestion
-- [ ] `app/services/firms_client.py`
-- [ ] `app/services/osm_client.py`
-- [ ] `app/services/geocode.py`
-- [ ] `scripts/fetch_historical.py`
-- [ ] `scripts/seed_demo_data.py`
+- [x] `app/services/firms_client.py`
+- [x] `app/services/osm_client.py`
+- [x] `app/services/geocode.py`
+- [x] `scripts/fetch_historical.py`
+- [x] `scripts/seed_demo_data.py`
 
 ## Phase 3 — Analysis engine
 - [ ] `app/services/classifier.py` — must include the farmland join and the `pending`/`unclassified` distinction from `data-model.md`

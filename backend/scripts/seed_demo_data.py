@@ -25,6 +25,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+from sqlalchemy.orm import Session
 
 # ---------------------------------------------------------------------------
 # Path setup — make app/ importable when run as a script from backend/

@@ -18,6 +18,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
+from sqlalchemy.orm import Session
 
 # ---------------------------------------------------------------------------
 # Path setup — make app/ importable when run as a script from backend/
@@ -59,7 +60,7 @@ def get_date_windows(end_date: date, days_back: int, max_window: int = 10) -> li
     return windows
 
 
-def fetch_historical(db, days_back: int) -> int:
+def fetch_historical(db: Session, days_back: int) -> int:
     today = datetime.now(timezone.utc).date()
     windows = get_date_windows(today, days_back)
     

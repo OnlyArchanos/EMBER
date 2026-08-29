@@ -95,8 +95,14 @@ class PersistentSource(Base):
     __tablename__ = "persistent_sources"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    # cluster_id matches FireDetection.cluster_id for its members; never -1.
+    # cluster_id always equals this row's own id (data-model.md §PersistentSource); never -1.
     cluster_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    # centroid_latitude/longitude: representative location of the cluster, recomputed as new
+    # members join. Used each run to match a DBSCAN group back to this physical source by
+    # proximity. Required by data-model.md §PersistentSource; absent previously — added here
+    # as a code-conforms-to-contract fix (no contract change; fields are in the frozen schema).
+    centroid_latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    centroid_longitude: Mapped[float] = mapped_column(Float, nullable=False)
     first_seen: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     last_seen: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     days_active: Mapped[int] = mapped_column(Integer, nullable=False)

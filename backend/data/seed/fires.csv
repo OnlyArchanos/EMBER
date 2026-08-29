@@ -1,0 +1,4 @@
+﻿latitude,longitude,brightness,frp,acq_date,acq_time,daynight,satellite,confidence
+20.1234,77.5678,312.4,15.2,2024-01-15,0830,d,snpp,n
+20.1235,77.5679,320.1,18.7,2024-01-15,0830,d,noaa20,h
+19.9876,78.1234,298.0,9.5,2024-01-14,2015,n,noaa21,l

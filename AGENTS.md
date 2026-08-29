@@ -11,6 +11,7 @@ An AI-based system for India that ingests NASA satellite fire/thermal-hotspot da
 1. Read `RULES.md` Section 1 (non-negotiables) and Section 2 (naming glossary). Every session, not just the first.
 2. `docs/data-model.md` and `docs/api-contract.md` are frozen contracts. Code conforms to them; they don't get edited to match whatever code happened to be written.
 3. If a name, field, or endpoint you need isn't in the contract docs or existing code, ask — do not invent one.
+4. **If you're Antigravity specifically**: `RULES.md` is 13.9K characters, over the 12,000-char cap on files placed in `.agents/rules/`. It's meant to be read as a normal referenced doc per point 1 above, not dropped into `.agents/rules/` as-is — don't split it without checking with a human first, since section boundaries matter for how it's read.
 
 ## Tech stack
 
@@ -48,6 +49,12 @@ docs/
   architecture.md, api-contract.md, data-model.md   — frozen contracts + design
   build-order.md, validation-results.md, demo-script.md — living documents, expect churn
   build-order.md tracks exactly which file to prompt for next — check it first
+  phase1-prompts.md, phase2-prompts.md, phase3-prompts.md — ready-to-use
+  build + review prompts; later phases should get their own prompts file
+  following the same pattern
+  full-audit-prompt.md — whole-codebase checkpoint (does it run, naming
+  consistency, future-proofing, cross-file logic bugs); re-run after every
+  phase, not just once
 ```
 
 ## Common commands

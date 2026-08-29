@@ -1,0 +1,29 @@
+﻿{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.5,20.0],[77.6,20.0],[77.6,20.1],[77.5,20.1],[77.5,20.0]]]
+      },
+      "properties": {
+        "osm_id": "way/123456",
+        "name": "Test Industrial Zone",
+        "zone_type": "industrial"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[78.0,19.5],[78.1,19.5],[78.1,19.6],[78.0,19.6],[78.0,19.5]]]
+      },
+      "properties": {
+        "osm_id": "way/789012",
+        "name": "Test Forest",
+        "zone_type": "forest"
+      }
+    }
+  ]
+}

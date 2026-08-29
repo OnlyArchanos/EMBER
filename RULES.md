@@ -52,7 +52,7 @@ The authoritative, full endpoint-by-endpoint spec — including query params, re
 - **Routers** (`app/routers/*.py`) only parse requests, call a service function, and shape the response with a Pydantic schema. No business logic, no direct DB queries, no spatial math in a router file.
 - **Services** (`app/services/*.py`) contain the actual logic — classification, persistence detection, flagging decisions, external API clients. Services may call other services and the database layer, never a router.
 - **`app/ml/`** is the only place model training or inference code lives. Training (`train.py`) never runs as part of a live request; inference (`infer.py`) is the only ML file in the live request path.
-- **The scheduler** (`app/scheduler.py`) only orchestrates *when* ingestion and recomputation happen; it must not contain the ingestion or analysis logic itself — it calls into `services/`.
+- **The scheduler** (`app/scheduler.py`) only orchestrates _when_ ingestion and recomputation happen; it must not contain the ingestion or analysis logic itself — it calls into `services/`.
 - The frontend never talks to NASA FIRMS, Overpass, or Nominatim directly. If a frontend component needs external data, that's a sign a backend endpoint is missing — add one, don't reach around the API.
 
 ---
@@ -60,17 +60,20 @@ The authoritative, full endpoint-by-endpoint spec — including query params, re
 ## 4. Code style
 
 **Python**
+
 - Follow PEP 8. Type hints are required on every function signature in `app/` (not required in one-off scripts under `scripts/`, but encouraged).
 - Every module gets a one-to-three-line docstring at the top explaining its role in the pipeline — not what each function does line by line, just orientation for someone opening the file cold.
 - Prefer explicit over clever: a slightly longer, obviously-correct spatial join beats a compact one-liner nobody can audit under time pressure.
 - Use the dependency versions in `requirements.txt`, and when adding a new one, pin a version you've actually confirmed installs and works — don't carry forward a version number from memory or from an old tutorial.
 
 **React/JavaScript**
+
 - Function components with hooks only — no class components.
 - One concern per component; if a component's file is doing data-fetching, layout, and business logic all at once, split it (this is why `hooks/` exists separately from `components/`).
 - No inline API URLs in components — everything goes through `src/api/client.js`.
 
 **General**
+
 - No commented-out dead code left in commits. Delete it; git history is the record, not a comment block.
 - No `TODO` without a name and a reason (`# TODO(arch): revisit threshold after validation run`, not bare `# TODO`).
 
@@ -81,18 +84,24 @@ The authoritative, full endpoint-by-endpoint spec — including query params, re
 These exist because they were real bugs found in an earlier review of this project's first draft. Treat this section as a permanent regression list, not historical trivia.
 
 - **Persistence detection must exclude DBSCAN's noise cluster (`cluster_id == -1`) before computing which clusters are "persistent."** Grouping noise points together and counting unique days across them will make scattered, unrelated fires look artificially persistent. Any change to `persistence.py` must keep this exclusion and must keep the test that proves it.
-- **Classification must perform a real spatial join against the farmland/orchard layer, not a default fallback.** `agricultural` is a positive classification, not "whatever's left over." Anything matching none of industrial/forest/farmland becomes `unclassified` — a real, first-class category — never silently mislabeled.
+- **Persistent-cluster identity must be stable across `persistence.py` runs, keyed by `PersistentSource.id` — never DBSCAN's raw per-run label.** DBSCAN doesn't guarantee the same physical cluster gets the same label from one run to the next; storing the raw label as `cluster_id` silently fragments a real persistent source's history (`days_active` never accumulates correctly, `first_seen` keeps resetting, duplicate `PersistentSource` rows can appear for the same physical location). Each run must match its DBSCAN groups against existing `active` `PersistentSource` records by centroid proximity (`data-model.md`'s `centroid_latitude`/`centroid_longitude`), never by label. "Wipe and re-link the active window every run" is not an acceptable interim assumption — it silently breaks the exact thing "persistent" is supposed to mean, so treat it as a bug, not a simplification, if you find it anywhere.
+- **Classification must perform a real spatial join against the farmland/orchard layer, not a default fallback.** `agricultural` is a positive classification, not "whatever's left over." Anything matching none of industrial/forest/farmland becomes `unclassified` — a real, first-class category — never silently mislabeled. **When a fire point spatially matches more than one zone (overlapping polygons), resolve it deterministically by priority: industrial > forest > farmland** — a fire inside a mapped industrial polygon is the strongest signal, and the result must never depend on which row a spatial join happens to return first.
 - **Ingestion must query all three current VIIRS sources (Suomi NPP, NOAA-20, NOAA-21), never one alone.** Suomi NPP's expected end-of-life means single-source ingestion is a known, foreseeable failure, not a hypothetical one.
 - **A `FlaggedCase` must always store why it was flagged** — its anomaly score and the nearest zone type/distance that made it "unclassified" in the first place. A flag with no stored reasoning is not acceptable; the whole point of the feature is being able to explain a flag to a human analyst.
-- **The known-industrial-sites validation list is a required, standing check**, not a one-time sanity test. Re-run `scripts/validate_known_sites.py` and update `docs/validation-results.md` after any change to `classifier.py`, and before any demo or rehearsal.
+- **The known-industrial-sites validation list is a required, standing check** — not a one-time sanity test. Re-run `scripts/validate_known_sites.py` and update `docs/validation-results.md` after any change to `classifier.py`, and before any demo or rehearsal.
+- **DBSCAN must use `metric="haversine"` with coordinates in radians, never a degree-based Euclidean approximation.** A fixed `eps` in degrees represents a different real-world distance depending on latitude — roughly 15% distortion across India's 8°N–35°N range. Convert `eps` from kilometers via `eps_km / 6371.0088`, and convert coordinates to radians before clustering.
+- **Current tunable thresholds (starting values, not final ones)** — DBSCAN `eps` = 1km (via haversine, per above), `min_samples` = 2; a cluster counts as persistent at `days_active >= 3`; a `PersistentSource` moves to `status = "ended"` when `last_seen` is more than 7 days old. These are explicitly meant to be revisited once real historical data and `validate_known_sites.py` results exist — they must be named constants (in `persistence.py` or `config.py`), never inline magic numbers, specifically so they're easy to find and retune later.
+- **`FlaggedCase.anomaly_score` is mocked until Phase 4's `ml/infer.py` exists — this must never look like a real model output.** The mock must live behind a single, clearly named function so the Phase 4 swap is a one-function change; it must use a neutral placeholder value (0.5), not a confident-looking one; and it must write an explicit placeholder marker into `case_note` so nobody downstream — frontend, teammate, or a judge — mistakes it for a real score.
+- **`PersistentSource.zone_type_at_location` must store one of `Zone.zone_type`'s actual values (`industrial`/`forest`/`farmland`), never a `fire_type` value directly.** `fire_type` uses `wildfire` where `Zone.zone_type` uses `forest` — a majority-vote-by-`fire_type` result must be translated back (`wildfire` → `forest`, `agricultural` → `farmland`) before being stored here, or it produces an invalid value.
+- **`flagging.py` must be idempotent per `PersistentSource`.** Check for an existing `FlaggedCase` referencing a given `persistent_source_id` before creating a new one — this runs repeatedly once Phase 5's scheduler exists, and without this check the flags table duplicates every run, the same failure mode the Phase 2 ingestion dedup logic already exists to prevent.
 
 ---
 
 ## 6. Working with external data
 
-- NASA FIRMS: respect the published rate limit (5,000 transactions per 10-minute window). Scheduled fetches, not on-demand ones triggered by user requests.
-- Overpass: assume it can time out or rate-limit on large queries. Zone polygons are fetched and cached ahead of time, never re-fetched live in a request path a user or a judge is waiting on.
-- Nominatim: max 1 request/second, and every request must set an identifying `User-Agent` — this is a term of their usage policy, not an optional nicety.
+- NASA FIRMS: respect the published rate limit (5,000 transactions per 10-minute window). The same country/area CSV endpoint used for live fetches also supports historical data — pass an explicit `[DATE]` alongside `day_range` (`.../api/area/csv/[MAP_KEY]/[SOURCE]/[AREA]/[DAY_RANGE]/[DATE]`) to get that many days starting from `[DATE]`. This is the documented mechanism for a few weeks to a few months of historical NRT-quality data, looped across successive date windows with rate-limit-respecting pacing between requests — it is not a workaround, and it's what `fetch_historical.py` uses. (Correction: an earlier version of this rule pointed at a separate "Archive Download" tool instead — that tool is for multi-year, standard-quality, global-scale bulk archives and isn't needed at this project's scale. That was a mistake, not a deliberate choice.)
+- Overpass: assume it can time out or rate-limit on large queries. Zone polygons **and administrative boundary polygons** (state/district, used for geocoding — see below) are fetched and cached ahead of time, never re-fetched live in a request path a user or a judge is waiting on.
+- Geocoding (state/district resolution) is a **local point-in-polygon join against cached OSM administrative boundaries**, not a live Nominatim call per detection. Nominatim's 1-request/second limit makes per-point reverse geocoding impractical at national fire-detection volumes — thousands of points a day against a one-per-second ceiling simply doesn't fit. If Nominatim is used at all, it's a rare, explicit, single-lookup fallback, never the primary path, and any such call must still set an identifying `User-Agent` per Nominatim's usage policy.
 - Anything fetched from an external source gets written to `data/raw/` (untouched) and `data/processed/` (cleaned) before anything else in the app reads it. No service reaches out to an external API and uses the response in the same breath — always land it locally first.
 
 ---
@@ -117,8 +126,8 @@ These exist because they were real bugs found in an earlier review of this proje
 ## 9. Git and workflow
 
 - One feature or fix per branch/PR. Don't bundle an unrelated cleanup into a change someone's trying to review quickly.
-- Commit messages describe *what changed and why*, not just what file was touched — "fix persistence noise-cluster bug" not "update persistence.py."
-- Trained model artifacts, raw downloaded data, and anything in `data/raw/` are gitignored. `data/seed/` is the one data directory that *is* committed, because the whole offline-demo strategy depends on it being present in every checkout.
+- Commit messages describe _what changed and why_, not just what file was touched — "fix persistence noise-cluster bug" not "update persistence.py."
+- Raw downloaded data (`data/raw/`, `data/processed/`) and `.env` are gitignored — never committed. `data/seed/` **and** the trained model artifact(s) under `app/ml/artifacts/` **are** committed, even though both are generated files — this is a deliberate exception to normal "don't commit generated output" practice, made for the same reason as Section 1, rule 3: a fresh checkout has to work fully offline without re-fetching data or retraining a model under demo-day time pressure.
 - If an agent session makes an assumption or a judgment call that isn't fully specified by this file or the contract docs, say so explicitly in the commit message or PR description — future sessions (and teammates) need to know where a guess was made, even a reasonable one.
 
 ---

@@ -21,11 +21,11 @@ backend/.env
 backend/data/raw/
 backend/data/processed/
 
-# === ML artifacts (trained models — large binaries, reproduce via train.py) ===
-backend/app/ml/artifacts/*.pkl
-backend/app/ml/artifacts/*.joblib
-backend/app/ml/artifacts/*.json
-!backend/app/ml/artifacts/.gitkeep
+# === ML artifacts ===
+# The trained model file(s) under app/ml/artifacts/ are COMMITTED on purpose
+# (see RULES.md §9) — a fresh checkout must work offline without retraining
+# under demo-day time pressure, same reasoning as data/seed/ being committed.
+# Deliberately nothing ignored in this directory.
 
 # === Node / Frontend ===
 node_modules/

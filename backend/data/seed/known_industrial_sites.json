@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Jamnagar Refinery",
+    "lat": 22.348,
+    "lon": 69.868,
+    "geometry": "POLYGON ((69.8 22.3, 70.0 22.3, 70.0 22.4, 69.8 22.4, 69.8 22.3))",
+    "zone_type": "industrial"
+  },
+  {
+    "name": "Vindhyachal Thermal Power Station",
+    "lat": 24.105,
+    "lon": 82.674,
+    "geometry": "POLYGON ((82.6 24.0, 82.8 24.0, 82.8 24.2, 82.6 24.2, 82.6 24.0))",
+    "zone_type": "industrial"
+  },
+  {
+    "name": "Bhilai Steel Plant",
+    "lat": 21.185,
+    "lon": 81.394,
+    "geometry": "POLYGON ((81.3 21.1, 81.5 21.1, 81.5 21.3, 81.3 21.3, 81.3 21.1))",
+    "zone_type": "industrial"
+  },
+  {
+    "name": "Tata Steel Jamshedpur",
+    "lat": 22.788,
+    "lon": 86.199,
+    "geometry": "POLYGON ((86.1 22.7, 86.3 22.7, 86.3 22.9, 86.1 22.9, 86.1 22.7))",
+    "zone_type": "industrial"
+  },
+  {
+    "name": "Kudankulam Nuclear Power Plant",
+    "lat": 8.169,
+    "lon": 77.713,
+    "geometry": "POLYGON ((77.6 8.1, 77.8 8.1, 77.8 8.3, 77.6 8.3, 77.6 8.1))",
+    "zone_type": "industrial"
+  }
+]

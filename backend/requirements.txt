@@ -1,0 +1,7 @@
+pydantic-settings==2.15.0
+sqlalchemy==2.0.52
+pandas==3.0.5
+requests==2.34.2
+geopandas==1.1.4
+shapely==2.1.2
+scikit-learn==1.6.1

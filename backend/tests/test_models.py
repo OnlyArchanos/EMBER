@@ -30,6 +30,8 @@ class TestFlaggedCaseUpdatedAt:
         # Create a PersistentSource (FK target) first.
         ps = PersistentSource(
             cluster_id=1,
+            centroid_latitude=0.0,
+            centroid_longitude=0.0,
             first_seen=datetime.date(2025, 1, 1),
             last_seen=datetime.date(2025, 1, 5),
             days_active=5,

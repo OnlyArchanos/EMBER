@@ -7,18 +7,21 @@ This is the actual, file-by-file execution order for the solo build. Update the 
 **Rule for every prompt within a phase:** feed it (1) `data-model.md` and/or `api-contract.md`, whichever is relevant, (2) the literal, already-written code of the 1–3 files it directly imports from or calls — never a description of them, (3) the relevant `RULES.md` section, and (4) an explicit instruction that if a name it needs isn't defined in what you gave it, it should ask rather than invent one.
 
 ## Phase 0 — Foundation docs
+
 - [x] `AGENTS.md`
 - [x] `RULES.md`
 - [x] `data-model.md`
 - [x] `api-contract.md`
 
 ## Phase 1 — Backend foundation (nothing else can start before this)
+
 - [x] `app/config.py`
 - [x] `app/database.py`
 - [x] `app/models.py` — build directly from `data-model.md`, field for field
 - [x] `app/schemas.py`
 
 ## Phase 2 — Ingestion
+
 - [x] `app/services/firms_client.py`
 - [x] `app/services/osm_client.py`
 - [x] `app/services/geocode.py`
@@ -26,17 +29,20 @@ This is the actual, file-by-file execution order for the solo build. Update the 
 - [x] `scripts/seed_demo_data.py`
 
 ## Phase 3 — Analysis engine
-- [ ] `app/services/classifier.py` — must include the farmland join and the `pending`/`unclassified` distinction from `data-model.md`
-- [ ] `app/services/persistence.py` — must exclude the DBSCAN noise cluster (`cluster_id == -1`) before scoring, per `RULES.md` §5
-- [ ] `app/services/flagging.py`
-- [ ] `scripts/validate_known_sites.py`
+
+- [x] `app/services/classifier.py` — must include the farmland join and the `pending`/`unclassified` distinction from `data-model.md`
+- [x] `app/services/persistence.py` — must exclude the DBSCAN noise cluster (`cluster_id == -1`) before scoring, per `RULES.md` §5
+- [x] `app/services/flagging.py`
+- [x] `scripts/validate_known_sites.py`
 
 ## Phase 4 — ML layer
+
 - [ ] `app/ml/features.py`
 - [ ] `app/ml/train.py` (run once, offline, against the historical data from Phase 2)
 - [ ] `app/ml/infer.py`
 
 ## Phase 5 — API
+
 - [ ] `app/routers/fires.py`
 - [ ] `app/routers/zones.py`
 - [ ] `app/routers/stats.py`
@@ -46,6 +52,7 @@ This is the actual, file-by-file execution order for the solo build. Update the 
 - [ ] `app/scheduler.py`
 
 ## Phase 6 — Frontend
+
 - [ ] `src/api/client.js` (everything else in the frontend depends on this one)
 - [ ] `src/hooks/useFires.js`, `src/hooks/useFlags.js`
 - [ ] `src/components/map/FireMap.jsx`, `HeatmapLayer.jsx`, `ZoneOverlay.jsx`
@@ -55,9 +62,11 @@ This is the actual, file-by-file execution order for the solo build. Update the 
 - [ ] `src/pages/Dashboard.jsx`
 
 ## Phase 7 — Integration & offline hardening
+
 - [ ] Confirm the whole stack runs with zero network access, purely off `data/seed/`
 - [ ] Confirm `/api/health` correctly reports `mode: seed` vs `mode: live`
 
 ## Phase 8 — Demo rehearsal & pitch
+
 - [ ] `docs/demo-script.md` drafted and rehearsed at least twice, including once with wifi off
 - [ ] `docs/validation-results.md` current as of the latest `classifier.py` change

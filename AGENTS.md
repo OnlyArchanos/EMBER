@@ -33,6 +33,10 @@ backend/app/
   services/          all business logic: ingestion clients, classifier,
                      persistence, flagging
   ml/                feature engineering, training (offline only), inference
+  ml/known_sites_fixture.py — single source of truth for constructing the
+                     known-industrial-sites test fixture; both train.py's
+                     validation hook and scripts/validate_known_sites.py
+                     import from here, never reimplement it locally
   scheduler.py       orchestrates when services run, contains no logic itself
 backend/data/
   seed/              committed known-good dataset — the offline demo depends on this
@@ -49,9 +53,9 @@ docs/
   architecture.md, api-contract.md, data-model.md   — frozen contracts + design
   build-order.md, validation-results.md, demo-script.md — living documents, expect churn
   build-order.md tracks exactly which file to prompt for next — check it first
-  phase1-prompts.md, phase2-prompts.md, phase3-prompts.md — ready-to-use
-  build + review prompts; later phases should get their own prompts file
-  following the same pattern
+  phase1-prompts.md, phase2-prompts.md, phase3-prompts.md, phase4-prompts.md
+  — ready-to-use build + review prompts; later phases should get their own
+  prompts file following the same pattern
   full-audit-prompt.md — whole-codebase checkpoint (does it run, naming
   consistency, future-proofing, cross-file logic bugs); re-run after every
   phase, not just once

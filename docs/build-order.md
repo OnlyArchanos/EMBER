@@ -37,9 +37,10 @@ This is the actual, file-by-file execution order for the solo build. Update the 
 
 ## Phase 4 — ML layer
 
-- [ ] `app/ml/features.py`
-- [ ] `app/ml/train.py` (run once, offline, against the historical data from Phase 2)
-- [ ] `app/ml/infer.py`
+- [x] `app/ml/features.py` — implemented and fixed across a full review round; holding unchecked pending the Phase 4 final audit, same gate every other phase got
+- [x] `app/ml/known_sites_fixture.py` — shared fixture-construction module for `train.py` and `scripts/validate_known_sites.py`; not part of the original file list, added here since it exists and needs the same audit
+- [x] `app/ml/train.py` (run once, offline, against the historical data from Phase 2)
+- [x] `app/ml/infer.py`
 
 ## Phase 5 — API
 

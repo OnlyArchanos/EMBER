@@ -3,6 +3,7 @@
 **Status:** frozen. Adding, renaming, or reshaping an endpoint requires updating this file first and getting explicit human sign-off (see `RULES.md` §1, rule 2).
 
 **Conventions:**
+
 - JSON in, JSON out. Field names are `snake_case` everywhere, matching `data-model.md` exactly.
 - Errors return a JSON body with a `detail` string and an appropriate 4xx/5xx status — no ad hoc error shapes per endpoint.
 - Any endpoint returning a list of `FireDetection`-scale data uses the paginated envelope: `{"results": [...], "total": int, "limit": int, "offset": int}`. Endpoints returning a small, bounded set (zones, flags) return a bare array — they don't need the envelope because the dataset is never large enough to need paging.
@@ -12,6 +13,7 @@
 Filterable, paginated list of classified detections, for the map and list views. Rows still in `fire_type = pending` are excluded from this endpoint by default (they haven't been processed yet — see `data-model.md`).
 
 - Query params (all optional): `fire_type`, `state`, `date_from`, `date_to`, `is_persistent`, `min_confidence`, `limit` (default 500, max 5000), `offset` (default 0), `sort` (default `acq_date_desc`).
+- `fire_type=pending` is not a valid filter value for this endpoint and is rejected (or silently ignored, treated as "no filter applied to fire_type") rather than ever returning pending rows — there is no way to retrieve pending rows through this endpoint, regardless of what's passed. Query the database directly for ops/debugging purposes.
 - Response: paginated envelope of `FireDetection` objects.
 
 ## `GET /api/fires/{fire_id}`
@@ -40,7 +42,7 @@ Aggregate numbers for the sidebar. Accepts the **same filters as `/api/fires`** 
 List of currently flagged Unexplained Persistent Sources.
 
 - Query params (optional): `status` (defaults to `open`).
-- Response: array of `FlaggedCase` objects, each including its linked `PersistentSource` summary (`id`, `cluster_id`, `first_seen`, `last_seen`, `days_active`, `member_count`, `zone_type_at_location`, `status`).
+- Response: array of `FlaggedCase` objects, each including its linked `PersistentSource` summary (`first_seen`, `last_seen`, `days_active`, `member_count`, `status`).
 
 ## `GET /api/flags/{flag_id}`
 

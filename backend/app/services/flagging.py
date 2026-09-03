@@ -1,107 +1,94 @@
 """
 Service to flag unexplained persistent sources.
+
+Distance-to-nearest-zone and all other cluster features are computed via
+compute_features() from app.ml.features — there is no independent distance
+implementation here (RULES.md §5 train/serve-consistency rule).
+
+Anomaly scoring delegates to infer.score_persistent_source() from
+app.ml.infer — there is no mock or fallback.  If the model artifact has not
+been loaded (infer.load_model() not called at startup), scoring raises
+RuntimeError immediately so the misconfiguration is visible, not silent.
 """
 
-from typing import Any
+from typing import Optional
 
 import geopandas as gpd
-import pandas as pd
 from shapely import wkt
 from sqlalchemy import select
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import Session, selectinload
 
+from app.ml import infer
+from app.ml.features import compute_features
 from app.models import FireDetection, FlaggedCase, PersistentSource, Zone
-
-
-def _score_anomaly(cluster_features: Any) -> float:
-    """
-    Temporary placeholder for the ML anomaly score model.
-    Phase 4 will replace this with real inference from ml/infer.py.
-    """
-    return 0.5
 
 
 def run_flagging(db: Session) -> int:
     """
     Finds active PersistentSources that are 'unclassified' (no known zone type)
-    and creates a FlaggedCase if one doesn't exist, assigning an anomaly score
-    and identifying the nearest known zone.
+    and creates a FlaggedCase if one doesn't exist, assigning a real ML anomaly
+    score from infer.score_persistent_source() and the nearest known zone.
     Returns the number of new FlaggedCases created.
+
+    Raises:
+        RuntimeError: if infer.load_model() has not been called before this
+            function runs (propagated from infer.score_persistent_source).
     """
-    # 1. Fetch eligible persistent sources without an existing flag
-    # Unclassified means zone_type_at_location is None
+    # 1. Fetch eligible persistent sources without an existing flag.
+    # Unclassified means zone_type_at_location is None.
     sources = db.scalars(
         select(PersistentSource)
         .options(selectinload(PersistentSource.flagged_case))
         .where(
             PersistentSource.status == "active",
-            PersistentSource.zone_type_at_location == None
+            PersistentSource.zone_type_at_location == None,
         )
     ).all()
-    
-    new_flags_count = 0
-    
+
     if not sources:
         return 0
 
-    # 2. Fetch all Zones for distance calculation
+    # 2. Build the zone GeoDataFrame once for the whole batch.
+    # Projected to EPSG:7755 (India NNRMS) for accurate metric distances.
+    # compute_features() reprojects each centroid point to match this CRS
+    # internally, so both sides of every distance calculation are consistent.
     zones = db.scalars(select(Zone)).all()
-    if not zones:
-        # If there are no zones at all in the DB, we can't find a nearest zone.
-        # But this edge case shouldn't happen in production. 
-        # We'll just leave them unflagged or flag them with no nearest zone.
-        pass
-        
-    gdf_zones = None
+    gdf_zones: Optional[gpd.GeoDataFrame] = None
     if zones:
         zone_records = [
-            {
-                "zone_type": z.zone_type,
-                "geometry": wkt.loads(z.geometry)
-            } for z in zones
+            {"zone_type": z.zone_type, "geometry": wkt.loads(z.geometry)}
+            for z in zones
         ]
-        gdf_zones = gpd.GeoDataFrame(zone_records, crs="EPSG:4326")
-        # Project to EPSG:7755 (India NNRMS) for accurate metric distance
-        gdf_zones = gdf_zones.to_crs("EPSG:7755")
+        gdf_zones = gpd.GeoDataFrame(zone_records, crs="EPSG:4326").to_crs("EPSG:7755")
+
+    new_flags_count = 0
 
     for ps in sources:
-        # Requirement 6: Check if already flagged
+        # Idempotency guard: skip if already flagged (RULES.md §5).
         if ps.flagged_case is not None:
             continue
-            
-        # Fetch member detections to find centroid
-        members = db.scalars(
-            select(FireDetection).where(FireDetection.cluster_id == ps.cluster_id)
-        ).all()
-        
+
+        members = list(
+            db.scalars(
+                select(FireDetection).where(FireDetection.cluster_id == ps.cluster_id)
+            ).all()
+        )
+
         if not members:
             continue
-            
-        lat = sum(m.latitude for m in members) / len(members)
-        lon = sum(m.longitude for m in members) / len(members)
-        
-        # Calculate nearest zone distance
-        nearest_type = None
-        nearest_dist_m = 0.0
-        
-        if gdf_zones is not None:
-            # Create a GeoSeries for this single point
-            point_gdf = gpd.GeoDataFrame(
-                geometry=gpd.points_from_xy([lon], [lat]),
-                crs="EPSG:4326"
-            ).to_crs("EPSG:7755")
-            
-            # calculate distances to all zones
-            distances = gdf_zones.geometry.distance(point_gdf.geometry[0])
-            min_idx = distances.idxmin()
-            
-            nearest_dist_m = float(distances[min_idx])
-            nearest_type = gdf_zones.iloc[min_idx]["zone_type"]
 
-        # Call placeholder ML function
-        # For now cluster_features is None since features.py isn't built yet
-        anomaly_score = _score_anomaly(cluster_features=None)
+        # Delegate all feature computation — including nearest-zone distance —
+        # to the shared features module.  No independent distance logic here.
+        features = compute_features(ps, members, gdf_zones)
+
+        nearest_dist_m: float = features["nearest_zone_distance_m"]
+        nearest_type: Optional[str] = features["nearest_zone_type"]
+
+        # Score via the trained model.  compute_features() is also called
+        # internally by score_persistent_source() — the double call is a known
+        # redundancy; a future refactor could accept a pre-computed feature dict.
+        # Raises RuntimeError if load_model() was not called at startup.
+        anomaly_score = infer.score_persistent_source(ps, members, gdf_zones)
 
         fc = FlaggedCase(
             persistent_source_id=ps.id,
@@ -109,7 +96,6 @@ def run_flagging(db: Session) -> int:
             nearest_zone_type=nearest_type,
             nearest_zone_distance_m=nearest_dist_m,
             status="open",
-            case_note="[AUTO-NOTE] anomaly_score is a Phase 3 placeholder (0.5); ML model not yet integrated."
         )
         db.add(fc)
         new_flags_count += 1

@@ -6,9 +6,15 @@ the app — do not instantiate Settings a second time.
 """
 
 from enum import Enum
+from pathlib import Path
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Absolute path to backend/data/sih_fire.db, anchored to this file's location
+# so it resolves identically regardless of the process's working directory.
+# config.py lives at backend/app/config.py → parent.parent reaches backend/.
+_DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "sih_fire.db"
 
 
 class DataMode(str, Enum):
@@ -22,8 +28,8 @@ class Settings(BaseSettings):
     NASA_FIRMS_MAP_KEY: str = ""
     NOMINATIM_USER_AGENT: str = ""
 
-    # Database — defaults to a local SQLite file relative to the repo root.
-    DATABASE_URL: str = "sqlite:///./backend/data/sih_fire.db"
+    # Database — defaults to a local SQLite file under backend/data/.
+    DATABASE_URL: str = f"sqlite:///{_DEFAULT_DB_PATH}"
 
     # Demo-mode switch (RULES.md §1, rule 3).  Safe default is "seed" so a
     # fresh checkout works fully offline without any external call succeeding.

@@ -42,7 +42,29 @@ This is the actual, file-by-file execution order for the solo build. Update the 
 - [x] `app/ml/train.py` (run once, offline, against the historical data from Phase 2)
 - [x] `app/ml/infer.py`
 
-## Phase 5 — API
+## PROTOTYPE MODE ACTIVE — see docs/context.md and docs/prototype-plan.md
+
+Phases below (5-full, 6-full) are the original full-project scope, DEFERRED not deleted. Active work is the two "Prototype" sections just below.
+
+## Prototype Phase 5 — API (1-day scope)
+
+- [ ] `app/routers/health.py`
+- [ ] `app/routers/fires.py` (simplified filters, no full pagination envelope)
+- [ ] `app/routers/zones.py`
+- [ ] `app/routers/flags.py` (GET only, no PATCH/export)
+- [ ] `app/routers/stats.py` (basic counts only)
+- [ ] `app/main.py` (model artifact already exists — just load it)
+- `app/scheduler.py` — CUT for prototype, see prototype-plan.md
+
+## Prototype Phase 6 — Frontend (1-day scope, dark minimal UI)
+
+- [ ] `src/api/client.js`
+- [ ] `src/components/FireMap.jsx` (map + markers + zone overlay, combined)
+- [ ] `src/components/Sidebar.jsx` (stats, combined)
+- [ ] `src/components/FlaggedPanel.jsx`
+- [ ] `src/pages/Dashboard.jsx`
+
+## Phase 5-full — API (deferred, original prompts in docs/phase5-prompts.md)
 
 - [ ] `app/routers/fires.py`
 - [ ] `app/routers/zones.py`
@@ -52,7 +74,7 @@ This is the actual, file-by-file execution order for the solo build. Update the 
 - [ ] `app/main.py`
 - [ ] `app/scheduler.py`
 
-## Phase 6 — Frontend
+## Phase 6-full — Frontend (deferred)
 
 - [ ] `src/api/client.js` (everything else in the frontend depends on this one)
 - [ ] `src/hooks/useFires.js`, `src/hooks/useFlags.js`

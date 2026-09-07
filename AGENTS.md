@@ -8,6 +8,7 @@ An AI-based system for India that ingests NASA satellite fire/thermal-hotspot da
 
 ## Before you touch anything
 
+0. Read `docs/context.md` first — current mode (prototype vs full project) and status.
 1. Read `RULES.md` Section 1 (non-negotiables) and Section 2 (naming glossary). Every session, not just the first.
 2. `docs/data-model.md` and `docs/api-contract.md` are frozen contracts. Code conforms to them; they don't get edited to match whatever code happened to be written.
 3. If a name, field, or endpoint you need isn't in the contract docs or existing code, ask — do not invent one.

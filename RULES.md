@@ -10,6 +10,10 @@ This file is deliberately long because it needs to be complete, not because ever
 
 ---
 
+## 0. Prototype mode note
+
+See `docs/prototype-plan.md`. Process rigor below (propose-first, fresh-session audits) is relaxed for the current prototype phase's new files only. All correctness rules (§5, hardware constraint, etc.) still fully apply to all code, prototype or not.
+
 ## 1. Non-negotiables (read this section every single time)
 
 1. **Never invent a name.** If a field, function, endpoint, or variable name isn't already defined in `docs/data-model.md`, `docs/api-contract.md`, or existing code, do not guess a plausible-sounding one. Stop and ask.

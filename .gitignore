@@ -18,6 +18,8 @@ backend/.env
 *.sqlite3
 
 # === Runtime data directories (seed/ is committed, raw/ and processed/ are not) ===
+data/raw/
+data/processed/
 backend/data/raw/
 backend/data/processed/
 

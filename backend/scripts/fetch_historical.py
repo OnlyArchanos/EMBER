@@ -60,15 +60,21 @@ def get_date_windows(end_date: date, days_back: int, max_window: int = 10) -> li
     return windows
 
 
-def fetch_historical(db: Session, days_back: int) -> int:
+def fetch_historical(
+    db: Session,
+    days_back: int,
+    bbox: tuple[float, float, float, float] | dict[str, float] | None = None,
+) -> int:
     today = datetime.now(timezone.utc).date()
-    windows = get_date_windows(today, days_back)
+    # FIRMS area endpoint caps day_range at 5; country endpoint caps at 10.
+    max_window = 5 if bbox else 10
+    windows = get_date_windows(today, days_back, max_window=max_window)
     
     all_frames: list[pd.DataFrame] = []
     total = 0
     request_count = 0
     
-    logger.info("Starting historical fetch for %d days back from %s.", days_back, today)
+    logger.info("Starting historical fetch for %d days back from %s (bbox=%s).", days_back, today, bbox)
     
     for start_date, day_range in windows:
         date_str = start_date.strftime("%Y-%m-%d")
@@ -84,7 +90,8 @@ def fetch_historical(db: Session, days_back: int) -> int:
                 satellite_token=satellite_token,
                 firms_product=firms_product,
                 day_range=day_range,
-                date_str=date_str
+                date_str=date_str,
+                bbox=bbox,
             )
             
             # Land raw data locally BEFORE parsing or DB insertion (RULES.md §6)
@@ -128,14 +135,27 @@ def main() -> None:
         default=30, 
         help="Days of history to fetch (default: 30)"
     )
+    parser.add_argument(
+        "--bbox",
+        type=str,
+        default=None,
+        help="Optional bounding box as west,south,east,north (e.g. 68.0,19.9,74.5,24.8)"
+    )
     args = parser.parse_args()
     
+    bbox = None
+    if args.bbox:
+        parts = [float(p.strip()) for p in args.bbox.split(",")]
+        if len(parts) != 4:
+            raise ValueError("--bbox must be 4 comma-separated numbers: west,south,east,north")
+        bbox = (parts[0], parts[1], parts[2], parts[3])
+
     # Ensure all tables exist — idempotent
     Base.metadata.create_all(bind=engine)
     
     db = SessionLocal()
     try:
-        fetch_historical(db, args.days)
+        fetch_historical(db, args.days, bbox=bbox)
         db.commit()
     except Exception:
         db.rollback()

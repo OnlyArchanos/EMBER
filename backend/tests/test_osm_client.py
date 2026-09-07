@@ -19,9 +19,12 @@ from app.database import Base
 from app.models import Zone
 from app.services.osm_client import (
     _assemble_relation_ring,
+    _build_admin_query,
+    _build_zone_query,
     _geometry_to_wkt,
     _parse_overpass_to_features,
     fetch_and_cache_admin_boundaries,
+    fetch_and_upsert_zones,
     upsert_zone,
     ADMIN_BOUNDARIES_PATH,
 )
@@ -308,3 +311,130 @@ class TestFetchAndCacheAdminBoundaries:
         osm_mod.fetch_and_cache_admin_boundaries()
 
         assert not (tmp_path / "admin_boundaries.geojson").exists()
+
+
+# ---------------------------------------------------------------------------
+# Bounding box scoping tests
+# ---------------------------------------------------------------------------
+
+class TestBuildZoneQuery:
+    def test_default_all_india_zone_queries(self) -> None:
+        """Regression protection: all-India queries must keep the area.india filter."""
+        for ztype in ["industrial", "forest", "farmland"]:
+            query = _build_zone_query(ztype)
+            assert "[bbox:" not in query
+            assert 'area["ISO3166-1"="IN"]->.india;' in query
+            assert "(area.india)" in query
+
+    def test_default_all_india_admin_queries(self) -> None:
+        """Regression protection: all-India admin queries must keep the area.india filter."""
+        for level in ["states", "districts"]:
+            query = _build_admin_query(level)
+            assert "[bbox:" not in query
+            assert 'area["ISO3166-1"="IN"]->.india;' in query
+            assert "(area.india)" in query
+
+    def test_bbox_strips_area_filter_across_all_queries(self) -> None:
+        """Scoping guarantee: scoped queries must strip ISO3166-1 and area.india."""
+        bbox = (68.0, 19.9, 74.5, 24.8)
+        for ztype in ["industrial", "forest", "farmland"]:
+            query = _build_zone_query(ztype, bbox=bbox)
+            assert "ISO3166-1" not in query
+            assert "area.india" not in query
+            assert "(area.india)" not in query
+
+        for level in ["states", "districts"]:
+            query = _build_admin_query(level, bbox=bbox)
+            assert "ISO3166-1" not in query
+            assert "area.india" not in query
+            assert "(area.india)" not in query
+
+    def test_bbox_parameter_unpacking_asymmetric_coordinates(self) -> None:
+        """Coordinate order verification: west, south, east, north -> [bbox:south,west,north,east]."""
+        # Distinct asymmetric values so any coordinate swap is caught:
+        # west=11.1, south=22.2, east=33.3, north=44.4
+        bbox_tuple = (11.1, 22.2, 33.3, 44.4)
+        query_t = _build_zone_query("industrial", bbox=bbox_tuple)
+        assert "[bbox:22.2,11.1,44.4,33.3];" in query_t
+
+        admin_q_t = _build_admin_query("states", bbox=bbox_tuple)
+        assert "[bbox:22.2,11.1,44.4,33.3];" in admin_q_t
+
+        bbox_dict = {"west": 11.1, "south": 22.2, "east": 33.3, "north": 44.4}
+        query_d = _build_zone_query("forest", bbox=bbox_dict)
+        assert "[bbox:22.2,11.1,44.4,33.3];" in query_d
+
+        admin_q_d = _build_admin_query("districts", bbox=bbox_dict)
+        assert "[bbox:22.2,11.1,44.4,33.3];" in admin_q_d
+
+    def test_header_not_found_guard_raises_runtime_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Loud failure: altering base template header raises RuntimeError instead of silent degradation."""
+        import app.services.osm_client as osm_mod
+
+        # Corrupt the header in the template
+        bad_queries = dict(osm_mod._ZONE_QUERIES)
+        bad_queries["industrial"] = "bad_header;\narea[\"ISO3166-1\"=\"IN\"]->.india;\n"
+        monkeypatch.setattr(osm_mod, "_ZONE_QUERIES", bad_queries)
+
+        with pytest.raises(RuntimeError, match="Expected header .* not found in base query"):
+            _build_zone_query("industrial", bbox=(68.0, 19.9, 74.5, 24.8))
+
+        bad_admin = dict(osm_mod._ADMIN_QUERIES)
+        bad_admin["states"] = "bad_header;\narea[\"ISO3166-1\"=\"IN\"]->.india;\n"
+        monkeypatch.setattr(osm_mod, "_ADMIN_QUERIES", bad_admin)
+
+        with pytest.raises(RuntimeError, match="Expected header .* not found in base query"):
+            _build_admin_query("states", bbox=(68.0, 19.9, 74.5, 24.8))
+
+    def test_area_filter_retained_guard_raises_runtime_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Loud failure: if area.india cannot be stripped, raises RuntimeError instead of slow path."""
+        import app.services.osm_client as osm_mod
+
+        # Malformed area filter that .replace() won't match
+        corrupted = (
+            f"[out:json][timeout:{osm_mod._OVERPASS_TIMEOUT}];\n"
+            "area[\"ISO3166-1\"=\"IN\"] /* altered formatting */ ->.india;\n"
+            "(way[\"landuse\"=\"industrial\"](area.india););\n"
+        )
+        bad_queries = dict(osm_mod._ZONE_QUERIES)
+        bad_queries["industrial"] = corrupted
+        monkeypatch.setattr(osm_mod, "_ZONE_QUERIES", bad_queries)
+
+        with pytest.raises(RuntimeError, match="Failed to strip area filter from scoped query template"):
+            _build_zone_query("industrial", bbox=(68.0, 19.9, 74.5, 24.8))
+
+        bad_admin = dict(osm_mod._ADMIN_QUERIES)
+        bad_admin["states"] = corrupted
+        monkeypatch.setattr(osm_mod, "_ADMIN_QUERIES", bad_admin)
+
+        with pytest.raises(RuntimeError, match="Failed to strip area filter from scoped query template"):
+            _build_admin_query("states", bbox=(68.0, 19.9, 74.5, 24.8))
+
+
+class TestFetchAndUpsertZonesBbox:
+    def test_fetch_and_upsert_zones_with_bbox(
+        self, db_session: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import app.services.osm_client as osm_mod
+
+        monkeypatch.setattr(osm_mod, "_RAW_DIR", tmp_path / "raw")
+        monkeypatch.setattr(osm_mod, "_PROCESSED_DIR", tmp_path / "processed")
+
+        captured_queries = []
+
+        def fake_fetch(query: str, label: str) -> dict:
+            captured_queries.append(query)
+            return {"elements": []}
+
+        monkeypatch.setattr(osm_mod, "_fetch_overpass", fake_fetch)
+
+        bbox = (68.0, 19.9, 74.5, 24.8)
+        count = fetch_and_upsert_zones(db_session, bbox=bbox)
+        assert count == 0
+        assert len(captured_queries) == 3
+        for q in captured_queries:
+            assert "[bbox:19.9,68.0,24.8,74.5];" in q

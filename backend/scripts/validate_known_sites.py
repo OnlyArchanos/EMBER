@@ -12,6 +12,7 @@ from app.services.classifier import classify_fires
 from app.services.persistence import run_persistence
 from app.services.flagging import run_flagging
 from app.ml.known_sites_fixture import load_known_sites, build_site_fixture
+from app.ml.infer import load_model
 
 
 def validate_known_sites():
@@ -26,23 +27,20 @@ def validate_known_sites():
     """
     Base.metadata.create_all(bind=engine)
 
+    # Load inference model so flagging can score persistent sources
+    load_model()
+
     validation_sites = load_known_sites()
 
     with Session(engine) as db:
         today = datetime.date.today()
 
         for idx, site in enumerate(validation_sites):
-            zone = Zone(
-                zone_type=site.get("zone_type", "industrial"),
-                name=site["name"],
-                geometry=site["geometry"]
-            )
-            db.add(zone)
-            db.commit()
-
             # build_site_fixture() is the single source of truth for detection
             # values (frp, brightness, daynight, satellite, confidence, count).
             # Pass today so last_seen is within the active window.
+            # Detections are classified against the real OSM zones already loaded
+            # into the database by seed_demo_data.py (or live ingestion).
             _, members = build_site_fixture(site, base_date=today, site_id=idx + 1)
             for m in members:
                 db.add(m)
@@ -95,11 +93,18 @@ def validate_known_sites():
 
         print(f"\nVALIDATION RESULT: {success_count}/{total_sites} known industrial sites correctly classified and not flagged.")
 
-        # Cleanup
-        db.query(FlaggedCase).delete()
-        db.query(PersistentSource).delete()
-        db.query(FireDetection).delete()
-        db.query(Zone).where(Zone.name.in_([s["name"] for s in validation_sites])).delete()
+        # Cleanup: Remove only the synthetic validation records;
+        # preserve underlying seeded zones and demo data.
+        val_lats = [s["lat"] for s in validation_sites]
+        val_fires = db.query(FireDetection).filter(FireDetection.latitude.in_(val_lats)).all()
+        val_cluster_ids = {f.cluster_id for f in val_fires if f.cluster_id is not None}
+        if val_cluster_ids:
+            val_ps = db.query(PersistentSource).filter(PersistentSource.cluster_id.in_(val_cluster_ids)).all()
+            val_ps_ids = [ps.id for ps in val_ps]
+            if val_ps_ids:
+                db.query(FlaggedCase).filter(FlaggedCase.persistent_source_id.in_(val_ps_ids)).delete(synchronize_session=False)
+            db.query(PersistentSource).filter(PersistentSource.cluster_id.in_(val_cluster_ids)).delete(synchronize_session=False)
+        db.query(FireDetection).filter(FireDetection.latitude.in_(val_lats)).delete(synchronize_session=False)
         db.commit()
 
         return success_count == total_sites

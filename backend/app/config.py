@@ -11,10 +11,11 @@ from pathlib import Path
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Absolute path to backend/data/sih_fire.db, anchored to this file's location
-# so it resolves identically regardless of the process's working directory.
+# Absolute path to backend/data/sih_fire.db and backend/.env, anchored to this
+# file's location so they resolve identically regardless of working directory.
 # config.py lives at backend/app/config.py → parent.parent reaches backend/.
 _DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "sih_fire.db"
+_DEFAULT_ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
 
 
 class DataMode(str, Enum):
@@ -57,7 +58,7 @@ class Settings(BaseSettings):
         return self
 
     model_config = SettingsConfigDict(
-        env_file="backend/.env",
+        env_file=(_DEFAULT_ENV_PATH, "backend/.env", ".env"),
         env_file_encoding="utf-8",
         # Extra env vars are silently ignored rather than raising an error,
         # which makes adding future settings non-breaking.

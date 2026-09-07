@@ -23,18 +23,56 @@ KNOWN_SITES_PATH: pathlib.Path = (
     pathlib.Path(__file__).parent.parent.parent / "data" / "seed" / "known_industrial_sites.json"
 )
 
-# ── Detection constants ───────────────────────────────────────────────────────
-# These values represent a canonical high-confidence daytime industrial
-# detection signature.  Both callers (validate_known_sites.py and train.py)
-# receive objects built from exactly these constants — changing a value here
-# automatically propagates to both.  Do not redeclare these at call sites.
+# ── Facility Profiles & Detection Constants ──────────────────────────────────
+# Rather than applying a single uniform constant across fundamentally different
+# industrial combustion processes, facility types define operational profiles.
+# Semantic field definitions:
+#   frp:         Fire Radiative Power in MW
+#   confidence:  FIRMS confidence flag ('l'=low, 'n'=nominal, 'h'=high)
+#   daynight:    Satellite solar pass flag ('d'=day, 'n'=night)
+FACILITY_PROFILES: dict[str, dict] = {
+    "refinery": {
+        "frp": 4.2,
+        "confidence": "n",
+        "daynight": "n",
+        "source": "Project empirical measurement (Jamnagar PS ID 34: mean=4.21 MW, max=16.63 MW, 98% nominal confidence)",
+    },
+    "thermal_power": {
+        "frp": 5.5,
+        "confidence": "n",
+        "daynight": "n",
+        "source": "engineering estimate, not independently sourced",
+    },
+    "steel_plant": {
+        "frp": 12.0,
+        "confidence": "n",
+        "daynight": "n",
+        "source": "engineering estimate, not independently sourced",
+    },
+    "cement": {
+        "frp": 2.0,
+        "confidence": "n",
+        "daynight": "n",
+        "source": "Project empirical measurement (Sanghi Cement PS ID 66: mean=1.96 MW, max=3.54 MW, 100% nominal confidence)",
+    },
+    "default": {
+        "frp": 5.0,
+        "confidence": "n",
+        "daynight": "n",
+        "source": "engineering estimate, not independently sourced",
+    },
+}
 
-FIXTURE_FRP: float = 50.0
+# Module-level defaults kept for backward compatibility:
+DEFAULT_FIXTURE_FRP: float = 5.0
+DEFAULT_FIXTURE_CONFIDENCE: str = "n"
+DEFAULT_FIXTURE_DAYNIGHT: str = "n"
+FIXTURE_FRP: float = DEFAULT_FIXTURE_FRP
+FIXTURE_CONFIDENCE: str = DEFAULT_FIXTURE_CONFIDENCE
+FIXTURE_DAYNIGHT: str = DEFAULT_FIXTURE_DAYNIGHT
 FIXTURE_BRIGHTNESS: float = 300.0
-FIXTURE_DAYNIGHT: str = "d"
 FIXTURE_SATELLITE: str = "snpp"
-FIXTURE_CONFIDENCE: str = "h"
-FIXTURE_ACQ_TIME: str = "1200"
+FIXTURE_ACQ_TIME: str = "1800"
 FIXTURE_DETECTION_COUNT: int = 5  # one detection per day for FIXTURE_DETECTION_COUNT days
 
 
@@ -84,6 +122,31 @@ def build_site_fixture(
     lat: float = site["lat"]
     lon: float = site["lon"]
 
+    # Match facility profile based on explicit facility_type or infer from name
+    facility_type = site.get("facility_type")
+    if not facility_type:
+        name_lower = site.get("name", "").lower()
+        if "refinery" in name_lower:
+            facility_type = "refinery"
+        elif "thermal" in name_lower or "power" in name_lower:
+            facility_type = "thermal_power"
+        elif "steel" in name_lower:
+            facility_type = "steel_plant"
+        elif "cement" in name_lower:
+            facility_type = "cement"
+        else:
+            facility_type = "default"
+
+    profile = FACILITY_PROFILES.get(facility_type, FACILITY_PROFILES["default"])
+
+    # Defensive integrity assertions: prevent accidental cross-type swaps
+    assert profile["confidence"] in ("l", "n", "h"), f"Invalid confidence flag: {profile['confidence']}"
+    assert profile["daynight"] in ("d", "n"), f"Invalid daynight flag: {profile['daynight']}"
+
+    site_frp = float(site.get("frp", profile["frp"]))
+    site_confidence = str(site.get("confidence", profile["confidence"]))
+    site_daynight = str(site.get("daynight", profile["daynight"]))
+
     ps = PersistentSource(
         cluster_id=site_id,
         centroid_latitude=lat,
@@ -104,12 +167,12 @@ def build_site_fixture(
             latitude=lat,
             longitude=lon,
             brightness=FIXTURE_BRIGHTNESS,
-            frp=FIXTURE_FRP,
+            frp=site_frp,
             acq_date=base_date + datetime.timedelta(days=i),
             acq_time=FIXTURE_ACQ_TIME,
-            daynight=FIXTURE_DAYNIGHT,
+            daynight=site_daynight,
             satellite=FIXTURE_SATELLITE,
-            confidence=FIXTURE_CONFIDENCE,
+            confidence=site_confidence,
             # "pending" is the correct initial fire_type: validate_known_sites.py
             # runs classify_fires() which sets it to "industrial".  train.py's
             # hook passes these objects directly to compute_features(), which

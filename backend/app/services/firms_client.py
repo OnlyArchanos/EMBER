@@ -45,6 +45,7 @@ SOURCES: list[tuple[str, str]] = [
 ]
 
 FIRMS_BASE = "https://firms.modaps.eosdis.nasa.gov/api/country/csv"
+FIRMS_AREA_BASE = "https://firms.modaps.eosdis.nasa.gov/api/area/csv"
 
 # FIRMS real-time country/area API caps day_range at 10.
 # We use 1 (yesterday + today window) for scheduled NRT pulls; the scheduler
@@ -67,8 +68,12 @@ _INTER_REQUEST_DELAY_S = 1.0
 # Public API
 # ---------------------------------------------------------------------------
 
-def fetch_and_ingest(db: Session, day_range: int = _DAY_RANGE) -> int:
-    """Fetch VIIRS NRT data for India from all three sources, normalise, land
+def fetch_and_ingest(
+    db: Session,
+    day_range: int = _DAY_RANGE,
+    bbox: tuple[float, float, float, float] | dict[str, float] | None = None,
+) -> int:
+    """Fetch VIIRS NRT data from all three sources, normalise, land
     files, and upsert into the database.
 
     Returns the total number of rows processed (inserted + updated).
@@ -77,18 +82,23 @@ def fetch_and_ingest(db: Session, day_range: int = _DAY_RANGE) -> int:
     Args:
         db:        SQLAlchemy session; caller is responsible for commit/rollback.
         day_range: Number of days to request from FIRMS (1-10). Default 1.
+        bbox:      Optional (west, south, east, north) tuple or dict to scope
+                   the fetch to a bounding box. When omitted, defaults to all of India.
     """
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
     all_frames: list[pd.DataFrame] = []
+    label = "bbox" if bbox else ""
 
     for i, (satellite_token, firms_product) in enumerate(SOURCES):
         if i > 0:
             time.sleep(_INTER_REQUEST_DELAY_S)
 
-        raw_text = fetch_csv(satellite_token, firms_product, day_range)
-        write_raw(satellite_token, raw_text)
+        raw_text = fetch_csv(
+            satellite_token, firms_product, day_range, bbox=bbox
+        )
+        write_raw(satellite_token, raw_text, label=label)
 
         frame = _parse_csv(raw_text, satellite_token)
         if frame.empty:
@@ -104,7 +114,7 @@ def fetch_and_ingest(db: Session, day_range: int = _DAY_RANGE) -> int:
         return 0
 
     merged = pd.concat(all_frames, ignore_index=True)
-    write_processed(merged)
+    write_processed(merged, label=label)
 
     total = 0
     for record in merged.to_dict(orient="records"):
@@ -261,6 +271,7 @@ def fetch_csv(
     firms_product: str,
     day_range: int,
     date_str: str | None = None,
+    bbox: tuple[float, float, float, float] | dict[str, float] | None = None,
 ) -> str:
     """Fetch raw CSV text from the FIRMS country/area API with retry + backoff.
 
@@ -273,11 +284,21 @@ def fetch_csv(
         day_range:       Number of days to request (1-10).
         date_str:        Optional YYYY-MM-DD start date for historical pulls.
                          Omit for NRT (most-recent) data.
+        bbox:            Optional (west, south, east, north) tuple or dict to scope
+                         the fetch to a bounding box. When omitted, defaults to all of India.
 
     Raises:
         requests.RequestException: after all retries are exhausted.
     """
-    url = f"{FIRMS_BASE}/{settings.NASA_FIRMS_MAP_KEY}/{firms_product}/IND/{day_range}"
+    if bbox is not None:
+        if isinstance(bbox, dict):
+            w, s, e, n = bbox["west"], bbox["south"], bbox["east"], bbox["north"]
+        else:
+            w, s, e, n = bbox
+        url = f"{FIRMS_AREA_BASE}/{settings.NASA_FIRMS_MAP_KEY}/{firms_product}/{w},{s},{e},{n}/{day_range}"
+    else:
+        url = f"{FIRMS_BASE}/{settings.NASA_FIRMS_MAP_KEY}/{firms_product}/IND/{day_range}"
+
     if date_str is not None:
         url = f"{url}/{date_str}"
 

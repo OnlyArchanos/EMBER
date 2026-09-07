@@ -24,6 +24,7 @@ import requests
 from shapely.geometry import shape
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.models import Zone
 
 logger = logging.getLogger(__name__)
@@ -132,7 +133,45 @@ _ADMIN_QUERIES: dict[str, str] = {
 # Public API
 # ---------------------------------------------------------------------------
 
-def fetch_and_upsert_zones(db: Session) -> int:
+def _build_zone_query(
+    zone_type: str,
+    bbox: tuple[float, float, float, float] | dict[str, float] | None = None,
+) -> str:
+    """Return the Overpass QL query string for zone_type, optionally scoped by bbox.
+
+    Overpass expects bounding box as (south, west, north, east).
+    When bbox is None, defaults to all-India query using area['ISO3166-1'='IN'].
+    """
+    base_query = _ZONE_QUERIES[zone_type]
+    if bbox is None:
+        return base_query
+
+    if isinstance(bbox, dict):
+        w, s, e, n = bbox["west"], bbox["south"], bbox["east"], bbox["north"]
+    else:
+        w, s, e, n = bbox
+
+    # Overpass bbox ordering: south, west, north, east
+    header = f"[out:json][timeout:{_OVERPASS_TIMEOUT}];\n"
+    bbox_header = f"[out:json][timeout:{_OVERPASS_TIMEOUT}][bbox:{s},{w},{n},{e}];\n"
+    if header not in base_query:
+        raise RuntimeError(f"Expected header {header!r} not found in base query for {zone_type}")
+    query = base_query.replace(header, bbox_header, 1)
+    # When a bounding box is supplied, the nationwide area filter is redundant and causes severe
+    # Overpass server-side latency / HTTP 504 timeouts. Strip it only for scoped queries.
+    query = query.replace('area["ISO3166-1"="IN"]->.india;\n', "")
+    query = query.replace("(area.india)", "")
+    if 'area["ISO3166-1"="IN"]' in query or "(area.india)" in query:
+        raise RuntimeError(
+            f"Failed to strip area filter from scoped query template for zone_type={zone_type}"
+        )
+    return query
+
+
+def fetch_and_upsert_zones(
+    db: Session,
+    bbox: tuple[float, float, float, float] | dict[str, float] | None = None,
+) -> int:
     """Fetch OSM landuse polygons for all three zone types and upsert into the DB.
 
     Upserts by osm_id -- never wipes and reinserts the whole table.  Returns
@@ -141,23 +180,27 @@ def fetch_and_upsert_zones(db: Session) -> int:
     Raises on unrecoverable Overpass failures after all retries are exhausted.
 
     Args:
-        db: SQLAlchemy session; caller is responsible for commit/rollback.
+        db:   SQLAlchemy session; caller is responsible for commit/rollback.
+        bbox: Optional (west, south, east, north) tuple or dict to scope
+              the fetch to a bounding box. When omitted, defaults to all of India.
     """
     _RAW_DIR.mkdir(parents=True, exist_ok=True)
     _PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
     total = 0
-    for zone_type, query in _ZONE_QUERIES.items():
+    label_suffix = "_bbox" if bbox else ""
+    for zone_type in _ZONE_QUERIES:
+        query = _build_zone_query(zone_type, bbox=bbox)
         logger.info("Fetching Overpass data for zone_type=%s", zone_type)
-        raw_data = _fetch_overpass(query, label=zone_type)
-        _write_raw_json(raw_data, label=f"zones_{zone_type}")
+        raw_data = _fetch_overpass(query, label=f"{zone_type}{label_suffix}")
+        _write_raw_json(raw_data, label=f"zones_{zone_type}{label_suffix}")
 
         features = _parse_overpass_to_features(raw_data)
         logger.info(
             "Parsed %d polygon features for zone_type=%s", len(features), zone_type
         )
 
-        _write_processed_geojson(features, label=f"zones_{zone_type}")
+        _write_processed_geojson(features, label=f"zones_{zone_type}{label_suffix}")
 
         for feat in features:
             upsert_zone(db, feat, zone_type)
@@ -167,7 +210,37 @@ def fetch_and_upsert_zones(db: Session) -> int:
     return total
 
 
-def fetch_and_cache_admin_boundaries() -> None:
+def _build_admin_query(
+    level: str,
+    bbox: tuple[float, float, float, float] | dict[str, float] | None = None,
+) -> str:
+    """Return the Overpass QL query string for admin level, optionally scoped by bbox."""
+    base_query = _ADMIN_QUERIES[level]
+    if bbox is None:
+        return base_query
+
+    if isinstance(bbox, dict):
+        w, s, e, n = bbox["west"], bbox["south"], bbox["east"], bbox["north"]
+    else:
+        w, s, e, n = bbox
+
+    header = f"[out:json][timeout:{_OVERPASS_TIMEOUT}];\n"
+    bbox_header = f"[out:json][timeout:{_OVERPASS_TIMEOUT}][bbox:{s},{w},{n},{e}];\n"
+    if header not in base_query:
+        raise RuntimeError(f"Expected header {header!r} not found in base query for admin level={level}")
+    query = base_query.replace(header, bbox_header, 1)
+    query = query.replace('area["ISO3166-1"="IN"]->.india;\n', "")
+    query = query.replace("(area.india)", "")
+    if 'area["ISO3166-1"="IN"]' in query or "(area.india)" in query:
+        raise RuntimeError(
+            f"Failed to strip area filter from scoped query template for admin level={level}"
+        )
+    return query
+
+
+def fetch_and_cache_admin_boundaries(
+    bbox: tuple[float, float, float, float] | dict[str, float] | None = None,
+) -> None:
     """Fetch OSM administrative boundary polygons (states + districts) for India
     and write them to data/processed/admin_boundaries.geojson.
 
@@ -176,15 +249,21 @@ def fetch_and_cache_admin_boundaries() -> None:
     NOT written to the zones table; does NOT create Zone records.
 
     Raises on unrecoverable Overpass failures after all retries are exhausted.
+
+    Args:
+        bbox: Optional (west, south, east, north) tuple or dict to scope
+              admin boundary fetching to a bounding box. When omitted, defaults to all of India.
     """
     _RAW_DIR.mkdir(parents=True, exist_ok=True)
     _PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
     all_features: list[dict] = []
-    for level, query in _ADMIN_QUERIES.items():
+    label_suffix = "_bbox" if bbox else ""
+    for level in _ADMIN_QUERIES:
+        query = _build_admin_query(level, bbox=bbox)
         logger.info("Fetching Overpass admin boundaries for level=%s", level)
-        raw_data = _fetch_overpass(query, label=f"admin_{level}")
-        _write_raw_json(raw_data, label=f"admin_{level}")
+        raw_data = _fetch_overpass(query, label=f"admin_{level}{label_suffix}")
+        _write_raw_json(raw_data, label=f"admin_{level}{label_suffix}")
 
         features = _parse_overpass_to_features(
             raw_data, extra_props={"admin_level": level}
@@ -270,11 +349,12 @@ def _fetch_overpass(query: str, label: str) -> dict:
             logger.info(
                 "Overpass request attempt %d/%d for %s", attempt, _MAX_RETRIES, label
             )
+            user_agent = settings.NOMINATIM_USER_AGENT or "SIH26162-FireDetection/1.0"
             response = requests.post(
                 _OVERPASS_URL,
                 data={"data": query},
                 timeout=_OVERPASS_TIMEOUT + 30,
-                headers={"Accept-Charset": "utf-8"},
+                headers={"User-Agent": user_agent, "Accept-Charset": "utf-8"},
             )
         except requests.Timeout:
             logger.warning(

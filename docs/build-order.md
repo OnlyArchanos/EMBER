@@ -48,12 +48,12 @@ Phases below (5-full, 6-full) are the original full-project scope, DEFERRED not 
 
 ## Prototype Phase 5 — API (1-day scope)
 
-- [ ] `app/routers/health.py`
-- [ ] `app/routers/fires.py` (simplified filters, no full pagination envelope)
-- [ ] `app/routers/zones.py`
-- [ ] `app/routers/flags.py` (GET only, no PATCH/export)
-- [ ] `app/routers/stats.py` (basic counts only)
-- [ ] `app/main.py` (model artifact already exists — just load it)
+- [x] `app/routers/health.py`
+- [x] `app/routers/fires.py` (simplified filters, no full pagination envelope)
+- [x] `app/routers/zones.py`
+- [x] `app/routers/flags.py` (GET only, no PATCH/export)
+- [x] `app/routers/stats.py` (basic counts only)
+- [x] `app/main.py` (model artifact already exists — just load it)
 - `app/scheduler.py` — CUT for prototype, see prototype-plan.md
 
 ## Prototype Phase 6 — Frontend (1-day scope, dark minimal UI)

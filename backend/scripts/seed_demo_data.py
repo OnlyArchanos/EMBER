@@ -19,12 +19,14 @@ Run from backend/:
 Safe to run repeatedly — upsert semantics prevent duplicate rows.
 """
 
+import datetime
 import json
 import logging
 import sys
 from pathlib import Path
 
 import pandas as pd
+from sqlalchemy import delete  # noqa: E402
 from sqlalchemy.orm import Session
 
 # ---------------------------------------------------------------------------
@@ -35,8 +37,10 @@ _BACKEND_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_BACKEND_DIR))
 
 from app.database import Base, SessionLocal, engine  # noqa: E402
+from app.models import FireDetection, FlaggedCase, PersistentSource  # noqa: E402
 from app.services.firms_client import normalise_firms_frame, upsert_detection  # noqa: E402
 from app.services.osm_client import upsert_zone  # noqa: E402
+
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -84,8 +88,15 @@ def _check_seed_dir() -> None:
 # Loaders
 # ---------------------------------------------------------------------------
 
-def _load_fires(db: Session) -> int:
-    """Read fires.csv and upsert each row via firms_client.upsert_detection."""
+def _load_fires(db: Session, base_date: datetime.date | None = None) -> int:
+    """Read fires.csv and upsert each row via firms_client.upsert_detection.
+
+    Detection dates are shifted relative to load time so the most recent
+    detection is anchored shortly before 'today' (yesterday by default, or
+    base_date - 1 day if base_date is specified). Exact day-spacing between
+    detections is preserved so clustering and persistence logic behave
+    identically regardless of calendar date.
+    """
     if not _FIRES_CSV.exists():
         logger.info("fires.csv not present — skipping fire detections.")
         return 0
@@ -109,6 +120,28 @@ def _load_fires(db: Session) -> int:
     # Normalise using the single shared function.  satellite_token is None
     # because the seed CSV already has a 'satellite' column with canonical values.
     frame = normalise_firms_frame(frame)
+
+    # Shift dates relative to load time
+    if not frame.empty and "acq_date" in frame.columns:
+        parsed_dates = pd.to_datetime(frame["acq_date"]).dt.date
+        max_acq_date = parsed_dates.max()
+        anchor = base_date if base_date is not None else datetime.date.today()
+        target_max_date = anchor - datetime.timedelta(days=1)
+        shift_days = (target_max_date - max_acq_date).days
+
+        if shift_days != 0:
+            frame["acq_date"] = parsed_dates.apply(
+                lambda d: d + datetime.timedelta(days=shift_days)
+            )
+            logger.info(
+                "Shifted fire detection dates by %d day(s) "
+                "(original max: %s, new max: %s, relative spacing preserved).",
+                shift_days,
+                max_acq_date,
+                target_max_date,
+            )
+        else:
+            frame["acq_date"] = parsed_dates
 
     count = 0
     for record in frame.to_dict(orient="records"):
@@ -171,7 +204,26 @@ def _load_zones(db: Session) -> int:
 # Entry point
 # ---------------------------------------------------------------------------
 
-def main() -> None:
+def _clear_previous_seed(db: Session) -> None:
+    """Clear previously seeded fire detections and derived analysis state.
+
+    Ensures that re-running seed_demo_data.py across different calendar days
+    replaces shifted detections cleanly rather than accumulating duplicates.
+    """
+    deleted_flags = db.execute(delete(FlaggedCase)).rowcount
+    deleted_fires = db.execute(delete(FireDetection)).rowcount
+    deleted_sources = db.execute(delete(PersistentSource)).rowcount
+    if deleted_fires > 0 or deleted_sources > 0 or deleted_flags > 0:
+        logger.info(
+            "Cleared previous demo data: %d fire(s), %d persistent source(s), %d flag(s).",
+            deleted_fires,
+            deleted_sources,
+            deleted_flags,
+        )
+    db.flush()
+
+
+def main(base_date: datetime.date | None = None) -> None:
     _check_seed_dir()
 
     # Ensure all tables exist — idempotent, does nothing if already present.
@@ -179,7 +231,8 @@ def main() -> None:
 
     db = SessionLocal()
     try:
-        fire_count = _load_fires(db)
+        _clear_previous_seed(db)
+        fire_count = _load_fires(db, base_date=base_date)
         zone_count = _load_zones(db)
         db.commit()
     except Exception:
@@ -187,6 +240,7 @@ def main() -> None:
         raise
     finally:
         db.close()
+
 
     logger.info(
         "Seed complete — %d fire detection(s), %d zone(s) loaded.",
@@ -196,5 +250,18 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Seed offline demo data with dates relative to load time."
+    )
+    parser.add_argument(
+        "--base-date",
+        type=lambda s: datetime.date.fromisoformat(s),
+        default=None,
+        help="Optional ISO date (YYYY-MM-DD) to anchor detection dates to. Defaults to today.",
+    )
+    args = parser.parse_args()
+    main(base_date=args.base_date)
+
 

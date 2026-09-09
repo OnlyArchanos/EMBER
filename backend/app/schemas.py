@@ -244,12 +244,11 @@ class TrendPoint(BaseModel):
 
 class StatsOut(BaseModel):
     """Response schema for GET /api/stats (sidebar aggregate numbers).
-    Field names match api-contract.md §GET /api/stats exactly."""
+    Field names match api-contract.md §GET /api/stats (trend omitted for prototype)."""
 
     total_fires: int
     by_type: dict[str, int]
     by_state: dict[str, int]
-    trend: List[TrendPoint]
     persistent_active_count: int
     persistent_ended_count: int
     flagged_open_count: int

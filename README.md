@@ -15,10 +15,6 @@
 
 Satellite thermal hotspot classification, persistent heat source tracking, and unsupervised anomaly detection for India. Built for Smart India Hackathon 2026 (Problem Statement SIH26162, sponsored by NTRO).
 
-<p align="center">
-  <img src="https://static.vecteezy.com/system/resources/thumbnails/044/185/915/small/burning-fire-flames-frame-border-isolated-on-transparent-background-png.png" width="560" alt="Fire Accent Border" />
-</p>
-
 [§ Overview](#-01--executive-overview) • [§ Interface](#-02--surveillance-dashboard) • [§ Pipeline](#-03--system-architecture--pipeline) • [§ Tech Stack](#-04--technology-stack) • [§ Quick Start](#-05--quick-start-guide) • [§ 3-Min Demo](#-06--3-minute-evaluator-tour) • [§ Benchmark](#-07--the-known-sites-benchmark) • [§ Anomaly ML](#-08--anomaly-detection-mechanics) • [§ API Specs](#-09--rest-api-contract) • [§ Troubleshooting](#-10--troubleshooting--support)
 
 ```
@@ -44,6 +40,7 @@ Satellite thermal hotspot classification, persistent heat source tracking, and u
 Every 24 hours, NASA polar-orbiting satellites (Suomi-NPP, NOAA-20, NOAA-21) scan India. Their VIIRS (Visible Infrared Imaging Radiometer Suite) sensors capture thousands of thermal radiation spikes across the country.
 
 Over 99% of these detections represent expected, routine combustion:
+
 - **Agricultural stubble burning:** Transient post-harvest biomass burning across Punjab, Haryana, and Uttar Pradesh.
 - **Seasonal wildfires:** Mobile, vegetative fire fronts in the Western Ghats, Simlipal, and Central India.
 - **Permitted industrial combustion:** Legitimate flare stacks, blast furnaces, and cement kilns inside designated industrial estates.
@@ -57,9 +54,11 @@ Incoming Satellite Thermal Stream (Thousands of Hotspots / Day)
 ```
 
 ### The Problem for Intelligence Analysts
+
 For defense and intelligence analysts at the **National Technical Research Organisation (NTRO)**, identifying an unregistered, concealed, or rogue industrial facility operating off-grid is like searching for a needle in a massive thermal haystack. Manually cross-referencing thousands of raw coordinates against facility registries every morning creates severe cognitive fatigue.
 
 EMBER automates this screening pipeline end-to-end:
+
 1. Ingests raw 375m satellite thermal vectors daily.
 2. Geocodes coordinates against cached state and district boundaries in 82 milliseconds.
 3. Spatially cross-references each point against OpenStreetMap landuse zones: industrial, forest, farmland, or unclassified.
@@ -150,6 +149,7 @@ The interface is structured into three dedicated operational zones:
 ```
 
 ### Architectural Principles
+
 - **Unidirectional Data Flow:** Downstream pipeline modules never mutate raw upstream satellite records.
 - **Zero Frontend Business Logic:** All spatial joins, clustering calculations, confidence scoring, and boundary matching execute server-side.
 - **Contract-Driven Design:** The database schema and REST API conform strictly to frozen documentation in `docs/data-model.md` and `docs/api-contract.md`.
@@ -158,22 +158,23 @@ The interface is structured into three dedicated operational zones:
 
 ## ◈ 04 | Technology Stack
 
-| Layer | Component | Version | Selection Rationale |
-| :--- | :--- | :--- | :--- |
-| **Backend Framework** | Python + FastAPI | `3.12` / `0.115+` | High-throughput asynchronous endpoints, automatic OpenAPI docs, strict Pydantic validation. |
-| **Database & ORM** | SQLite + SQLAlchemy | `2.0+` | Zero-configuration dev and offline demo mode; 100% compliant with frozen schemas. |
-| **Spatial Engine** | GeoPandas + Shapely | `1.0+` | Vectorised STRtree spatial indexing; sub-second point-in-polygon queries on CPU. |
-| **Machine Learning** | scikit-learn | `1.6+` | Unsupervised `IsolationForest` outlier detection across 7 tabular features; lightweight and deterministic. |
-| **Frontend Core** | React + Vite | `19.0` / `6.0` | High-speed hot module replacement, isolated component state, minimal production footprint. |
-| **Map Engine** | MapLibre GL JS | `5.1+` | Open-source fork of Mapbox GL; free of proprietary credit-card registration requirements. |
-| **Basemap Tiles** | CARTO Dark Matter | `Raster/Vector` | Deep-black cartographic styling designed for high-contrast thermal hotspot visualization. |
-| **Design Tokens** | Shared Theme (`theme.js`) | `Custom` | Single source of truth for color tokens; guarantees zero hardcoded hex drift across the UI. |
+| Layer                 | Component                 | Version           | Selection Rationale                                                                                        |
+| :-------------------- | :------------------------ | :---------------- | :--------------------------------------------------------------------------------------------------------- |
+| **Backend Framework** | Python + FastAPI          | `3.12` / `0.115+` | High-throughput asynchronous endpoints, automatic OpenAPI docs, strict Pydantic validation.                |
+| **Database & ORM**    | SQLite + SQLAlchemy       | `2.0+`            | Zero-configuration dev and offline demo mode; 100% compliant with frozen schemas.                          |
+| **Spatial Engine**    | GeoPandas + Shapely       | `1.0+`            | Vectorised STRtree spatial indexing; sub-second point-in-polygon queries on CPU.                           |
+| **Machine Learning**  | scikit-learn              | `1.6+`            | Unsupervised `IsolationForest` outlier detection across 7 tabular features; lightweight and deterministic. |
+| **Frontend Core**     | React + Vite              | `19.0` / `6.0`    | High-speed hot module replacement, isolated component state, minimal production footprint.                 |
+| **Map Engine**        | MapLibre GL JS            | `5.1+`            | Open-source fork of Mapbox GL; free of proprietary credit-card registration requirements.                  |
+| **Basemap Tiles**     | CARTO Dark Matter         | `Raster/Vector`   | Deep-black cartographic styling designed for high-contrast thermal hotspot visualization.                  |
+| **Design Tokens**     | Shared Theme (`theme.js`) | `Custom`          | Single source of truth for color tokens; guarantees zero hardcoded hex drift across the UI.                |
 
 ---
 
 ## ◈ 05 | Quick Start Guide
 
 ### Prerequisites Checklist
+
 - [✔] Python 3.11 or 3.12 (`python --version`)
 - [✔] Node.js 18+ and npm (`node --version`)
 - [✔] CARTO API Key: Free and instant at [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey) (no credit card needed)
@@ -212,6 +213,7 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 Verify backend health by visiting `http://localhost:8000/api/health` in your browser. Expected response:
+
 ```json
 {
   "status": "ok",
@@ -256,26 +258,26 @@ Follow this sequence to evaluate all primary system capabilities in 3 minutes:
 
 - **▸ Step 01 | Ground Truth Overlays (0:00 - 0:30):**
   Click the **`Zones`** toggle button in the top right of the map canvas.
-  *Observation:* 41 OpenStreetMap multipolygons render over Gujarat (industrial zones in blue, forest conservation areas in red, agricultural tracts in green). Proves real spatial context beyond naive bounding boxes.
+  _Observation:_ 41 OpenStreetMap multipolygons render over Gujarat (industrial zones in blue, forest conservation areas in red, agricultural tracts in green). Proves real spatial context beyond naive bounding boxes.
 
 - **▸ Step 02 | Inspect a Ranked Persistent Anomaly (0:30 - 1:15):**
   In the right-hand **Flagged Anomalies** panel, click **Case #1** (Cluster 6 near Hazira).
-  *Observation:* The map smoothly flies to the cluster centroid. The orange halo marks the persistent source.
-  *Metrics:* **61.9% Anomaly Confidence**, active across **8 days (18 hits)**, and **55.5 km away from the nearest designated zone**. It is burning repeatedly where no registered facility exists.
+  _Observation:_ The map smoothly flies to the cluster centroid. The orange halo marks the persistent source.
+  _Metrics:_ **61.9% Anomaly Confidence**, active across **8 days (18 hits)**, and **55.5 km away from the nearest designated zone**. It is burning repeatedly where no registered facility exists.
 
 - **▸ Step 03 | Inspect Individual Fire Telemetry (1:15 - 1:50):**
   Click any individual circle marker on the map.
-  *Observation:* The popup displays satellite instrument (`VIIRS`), brightness temperature, Fire Radiative Power (FRP), acquisition date, and administrative region (`Gujarat`, `Surat`).
-  *Check:* Popups gracefully handle unassigned attributes (`Location: Unknown`), with zero `"null"` or `"undefined"` leaks.
+  _Observation:_ The popup displays satellite instrument (`VIIRS`), brightness temperature, Fire Radiative Power (FRP), acquisition date, and administrative region (`Gujarat`, `Surat`).
+  _Check:_ Popups gracefully handle unassigned attributes (`Location: Unknown`), with zero `"null"` or `"undefined"` leaks.
 
 - **▸ Step 04 | Test Metric Protection Under Search (1:50 - 2:25):**
   In the left sidebar under **FILTERS**, change **Fire Type** to `Industrial`.
-  *Observation:* The filtered count in the sidebar drops from **249 ➔ 106**, and the map updates instantly.
-  *Critical Check:* Look at **CURRENT STATUS** at the bottom of the sidebar. **Flagged Open: 4** and **Persistent Active: 6** remain fixed. Viewport filters do not distort global surveillance metrics.
+  _Observation:_ The filtered count in the sidebar drops from **249 ➔ 106**, and the map updates instantly.
+  _Critical Check:_ Look at **CURRENT STATUS** at the bottom of the sidebar. **Flagged Open: 4** and **Persistent Active: 6** remain fixed. Viewport filters do not distort global surveillance metrics.
 
 - **▸ Step 05 | Verify Local Administrative Geocoding (2:25 - 3:00):**
   Select `Gujarat` in the State dropdown to isolate the 239 state-validated points, or switch to `Maharashtra` to inspect the 9 border edge points.
-  *Takeaway:* Detections are spatially tagged against sovereign administrative polygons in 82 milliseconds during system startup.
+  _Takeaway:_ Detections are spatially tagged against sovereign administrative polygons in 82 milliseconds during system startup.
 
 ---
 
@@ -287,13 +289,13 @@ Follow this sequence to evaluate all primary system capabilities in 3 minutes:
 
 A detection system must recognize verified facilities without generating false alarms. EMBER is calibrated against operating industrial sites across India:
 
-| Facility Name | Operator & Location | Radiative Profile | Benchmark Status |
-| :--- | :--- | :--- | :--- |
-| **Jamnagar Refinery** | Reliance Industries, Gujarat | Mean FRP: 4.21 MW, Peak: 16.63 MW | [✔] Calibrated against empirical satellite measurements |
-| **Sanghi Cement** | Sanghi Industries, Kutch, Gujarat | Mean FRP: 1.96 MW, Peak: 3.54 MW | [✔] Calibrated against empirical satellite measurements |
-| **Vindhyachal Super Thermal** | NTPC, Singrauli, Madhya Pradesh | Baseline: 5.5 MW continuous thermal signature | [✔] Calibrated against baseline thermal profile |
-| **Bhilai Steel Plant** | SAIL, Durg, Chhattisgarh | Baseline: 12.0 MW blast furnace combustion | [✔] Calibrated against baseline thermal profile |
-| **Tata Steel Jamshedpur** | Tata Steel, East Singhbhum, Jharkhand | Baseline: 12.0 MW blast furnace combustion | [✔] Calibrated against baseline thermal profile |
+| Facility Name                 | Operator & Location                   | Radiative Profile                             | Benchmark Status                                        |
+| :---------------------------- | :------------------------------------ | :-------------------------------------------- | :------------------------------------------------------ |
+| **Jamnagar Refinery**         | Reliance Industries, Gujarat          | Mean FRP: 4.21 MW, Peak: 16.63 MW             | [✔] Calibrated against empirical satellite measurements |
+| **Sanghi Cement**             | Sanghi Industries, Kutch, Gujarat     | Mean FRP: 1.96 MW, Peak: 3.54 MW              | [✔] Calibrated against empirical satellite measurements |
+| **Vindhyachal Super Thermal** | NTPC, Singrauli, Madhya Pradesh       | Baseline: 5.5 MW continuous thermal signature | [✔] Calibrated against baseline thermal profile         |
+| **Bhilai Steel Plant**        | SAIL, Durg, Chhattisgarh              | Baseline: 12.0 MW blast furnace combustion    | [✔] Calibrated against baseline thermal profile         |
+| **Tata Steel Jamshedpur**     | Tata Steel, East Singhbhum, Jharkhand | Baseline: 12.0 MW blast furnace combustion    | [✔] Calibrated against baseline thermal profile         |
 
 <details>
 <summary><b>▸ Deep Dive: Why Kudankulam Nuclear Power Plant was removed from the benchmark (Click to expand)</b></summary>
@@ -360,15 +362,15 @@ The feature **`nearest_zone_distance_m`** carries significant weight: an active 
 
 The backend exposes clean, versioned REST endpoints adhering to `docs/api-contract.md`:
 
-| Method | Endpoint | Query Parameters | Response Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/fires` | `fire_type`, `state`, `district`, `start_date`, `end_date`, `limit`, `offset` | Filtered bare array of fire detection objects. |
-| `GET` | `/api/fires/{fire_id}` | None | Single detailed fire detection object. |
-| `GET` | `/api/flags` | `status`, `limit`, `offset` | Ranked list of flagged persistent anomalies with cluster metrics. |
-| `GET` | `/api/flags/{flag_id}` | None | Single flagged anomaly record with associated fire hit IDs. |
-| `GET` | `/api/stats` | `fire_type`, `state`, `district`, `start_date`, `end_date` | Aggregated metrics: total hotspots, breakdown counts, global active counts. |
-| `GET` | `/api/zones` | `zone_type` | GeoJSON FeatureCollection of OpenStreetMap ground truth polygons. |
-| `GET` | `/api/health` | None | Service operational status and data mode (`{"status": "ok", "mode": "seed"}`). |
+| Method | Endpoint               | Query Parameters                                                              | Response Description                                                           |
+| :----- | :--------------------- | :---------------------------------------------------------------------------- | :----------------------------------------------------------------------------- |
+| `GET`  | `/api/fires`           | `fire_type`, `state`, `district`, `start_date`, `end_date`, `limit`, `offset` | Filtered bare array of fire detection objects.                                 |
+| `GET`  | `/api/fires/{fire_id}` | None                                                                          | Single detailed fire detection object.                                         |
+| `GET`  | `/api/flags`           | `status`, `limit`, `offset`                                                   | Ranked list of flagged persistent anomalies with cluster metrics.              |
+| `GET`  | `/api/flags/{flag_id}` | None                                                                          | Single flagged anomaly record with associated fire hit IDs.                    |
+| `GET`  | `/api/stats`           | `fire_type`, `state`, `district`, `start_date`, `end_date`                    | Aggregated metrics: total hotspots, breakdown counts, global active counts.    |
+| `GET`  | `/api/zones`           | `zone_type`                                                                   | GeoJSON FeatureCollection of OpenStreetMap ground truth polygons.              |
+| `GET`  | `/api/health`          | None                                                                          | Service operational status and data mode (`{"status": "ok", "mode": "seed"}`). |
 
 ---
 
@@ -434,6 +436,7 @@ The backend exposes clean, versioned REST endpoints adhering to `docs/api-contra
 <br>
 
 In `backend/.env`, toggle `DATA_MODE`:
+
 ```env
 # For 100% offline evaluation against seed data (default):
 DATA_MODE=seed
@@ -442,6 +445,7 @@ DATA_MODE=seed
 DATA_MODE=live
 NASA_FIRMS_MAP_KEY=your_nasa_firms_key_here
 ```
+
 When set to `seed`, the backend never makes external network calls, ensuring bulletproof demo reliability during presentations.
 
 </details>
@@ -452,6 +456,7 @@ When set to `seed`, the backend never makes external network calls, ensuring bul
 <br>
 
 If you want to reset the database back to clean seed data:
+
 ```bash
 cd backend
 # Delete local database file
@@ -490,13 +495,13 @@ Covert or rogue industrial facilities have no ground truth labels. By definition
 
 Measured on standard quad-core x86 CPU hardware:
 
-| Operational Step | Execution Time | Benchmark Note |
-| :--- | :--- | :--- |
-| **Local Boundary Geocoding** | `82 ms` | Spatial join of 249 points against 239 administrative polygons via GeoPandas STRtree |
-| **Point-in-Polygon Classification** | `310 ms` | Point-in-polygon evaluation against 41 detailed OpenStreetMap multipolygons |
-| **DBSCAN Persistence Clustering** | `45 ms` | Spatial density clustering with 1.5 km epsilon and temporal tracking |
-| **Isolation Forest Anomaly Scoring** | `12 ms` | Tabular feature vector extraction and inference through 100 decision trees |
-| **Full Automated Test Suite** | `34.05 s` | 127 automated tests executed via `pytest -q` (100% pass rate) |
+| Operational Step                     | Execution Time | Benchmark Note                                                                       |
+| :----------------------------------- | :------------- | :----------------------------------------------------------------------------------- |
+| **Local Boundary Geocoding**         | `82 ms`        | Spatial join of 249 points against 239 administrative polygons via GeoPandas STRtree |
+| **Point-in-Polygon Classification**  | `310 ms`       | Point-in-polygon evaluation against 41 detailed OpenStreetMap multipolygons          |
+| **DBSCAN Persistence Clustering**    | `45 ms`        | Spatial density clustering with 1.5 km epsilon and temporal tracking                 |
+| **Isolation Forest Anomaly Scoring** | `12 ms`        | Tabular feature vector extraction and inference through 100 decision trees           |
+| **Full Automated Test Suite**        | `34.05 s`      | 127 automated tests executed via `pytest -q` (100% pass rate)                        |
 
 ---
 

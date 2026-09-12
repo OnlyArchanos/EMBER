@@ -1,5 +1,5 @@
 """
-Application settings for the SIH26162 fire-detection backend.
+Application settings for the EMBER fire-detection backend.
 All values are loaded from the environment (or backend/.env); nothing is
 hardcoded here.  Import the singleton `settings` object everywhere else in
 the app — do not instantiate Settings a second time.

@@ -1,5 +1,5 @@
 """
-SQLAlchemy ORM table definitions for the SIH26162 fire-detection pipeline.
+SQLAlchemy ORM table definitions for the EMBER fire-detection pipeline.
 This module is data-structure only — no business logic, no queries.
 Field names, types, enum values, and defaults are frozen by docs/data-model.md;
 do not rename or add fields here without first updating that document and

@@ -1,4 +1,4 @@
-# RULES.md — SIH26162 Fire Detection Project
+# RULES.md — EMBER Fire Detection Project
 
 ## 0. What this document is
 

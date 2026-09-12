@@ -1,5 +1,5 @@
 """
-OpenStreetMap / Overpass ingestion client for the SIH26162 fire-detection pipeline.
+OpenStreetMap / Overpass ingestion client for the EMBER fire-detection pipeline.
 
 Fetches three landuse polygon types for India -- industrial, forest, farmland --
 via Overpass QL and upserts them into the Zone table keyed on osm_id (never
@@ -350,7 +350,7 @@ def _fetch_overpass(query: str, label: str) -> dict:
             logger.info(
                 "Overpass request attempt %d/%d for %s", attempt, _MAX_RETRIES, label
             )
-            user_agent = settings.NOMINATIM_USER_AGENT or "SIH26162-FireDetection/1.0"
+            user_agent = settings.NOMINATIM_USER_AGENT or "EMBER-FireDetection/1.0"
             response = requests.post(
                 _OVERPASS_URL,
                 data={"data": query},

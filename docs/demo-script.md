@@ -1,6 +1,6 @@
 # Demo Script & Pre-Demo Checklist
 
-This is the operational checklist and presentation script for the SIH26162 Fire Detection system demo.
+This is the operational checklist and presentation script for the EMBER Fire Detection system demo.
 
 ---
 
@@ -9,6 +9,7 @@ This is the operational checklist and presentation script for the SIH26162 Fire 
 Follow these steps on the demo machine before every rehearsal or live presentation:
 
 ### Step 1: Re-seed Demo Data (Crucial)
+
 ```bash
 # Run from backend/
 python scripts/seed_demo_data.py
@@ -19,10 +20,12 @@ python scripts/seed_demo_data.py
 - **Why:** The persistence detection logic evaluates cluster recency against `today` (marking sources older than 7 days as `ended`). `seed_demo_data.py` clears any prior state, preserves relative day-spacing between all detections, and dynamically anchors the latest detection to yesterday relative to the current clock at load time. Running this ensures that active persistent sources and open flagged cases are always fresh and active on demo day.
 
 ### Step 2: Start the Backend
+
 ```bash
 # Run from backend/
 python -m uvicorn app.main:app --reload
 ```
+
 - Verify startup logs show:
   1. `Model artifact loaded ... (score_min=0.3564, score_max=0.7777)`
   2. `Startup classification completed: 249 fires classified`
@@ -31,19 +34,24 @@ python -m uvicorn app.main:app --reload
   5. `Uvicorn running on http://127.0.0.1:8000`
 
 ### Step 3: Quick Sanity Verification
+
 Run a quick HTTP check or open in browser:
+
 - `http://127.0.0.1:8000/api/health` -> `{"status": "ok", "mode": "seed"}`
 - `http://127.0.0.1:8000/api/fires` -> 249 classified fires returned
 - `http://127.0.0.1:8000/api/flags` -> 4 open flagged cases returned
 
 ### Step 4: Start the Frontend
+
 ```bash
 # Run from frontend/
 npm run dev
 ```
+
 - Open `http://localhost:5173` in browser.
 
 ### Step 5: Offline Proof (Rehearsal Requirement)
+
 - Disconnect Wi-Fi / network.
 - Confirm all maps, filters, stats, and flagged cases render smoothly with zero network requests outside `localhost` (RULES.md §1, rule 3).
 

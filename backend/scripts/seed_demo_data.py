@@ -1,5 +1,5 @@
 """
-Offline demo seeder for the SIH26162 fire-detection pipeline.
+Offline demo seeder for the EMBER fire-detection pipeline.
 
 Loads fire detection and zone records from backend/data/seed/ into the local
 SQLite database — zero network access.  Reuses firms_client.upsert_detection

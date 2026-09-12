@@ -1,5 +1,5 @@
 """
-Pydantic request/response schemas for the SIH26162 fire-detection API.
+Pydantic request/response schemas for the EMBER fire-detection API.
 
 Every field name matches docs/api-contract.md and docs/data-model.md exactly —
 these are frozen contracts; do not rename fields here without first updating

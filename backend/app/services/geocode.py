@@ -1,5 +1,5 @@
 """
-Geocoding service for the SIH26162 fire-detection pipeline.
+Geocoding service for the EMBER fire-detection pipeline.
 
 Resolves state and district names for a batch of fire-detection points via a
 vectorised point-in-polygon spatial join against the OSM administrative

@@ -1,6 +1,6 @@
 """
 SQLAlchemy engine, session factory, declarative base, and FastAPI
-dependency for the SIH26162 fire-detection backend.  This module
+dependency for the EMBER fire-detection backend.  This module
 contains only connection/session wiring — no business logic of any kind.
 """
 

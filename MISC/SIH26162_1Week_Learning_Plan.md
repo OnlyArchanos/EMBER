@@ -1,4 +1,4 @@
-# SIH26162 — 1-Week Must-Learn Plan (By Role)
+# EMBER — 1-Week Must-Learn Plan (By Role)
 
 Scope rule for this whole document: if it isn't something someone will actually touch in this specific codebase (per `AGENTS.md`/`RULES.md`), it's not on the list, no matter how "good to know" it generally is. A week is enough to get someone from zero to genuinely useful on one workstream — not enough to also teach them things the project doesn't need.
 
@@ -13,9 +13,10 @@ Scope rule for this whole document: if it isn't something someone will actually 
 
 ## A. Data & Ingestion workstream
 
-*(pulls NASA FIRMS + OpenStreetMap data, hands it downstream)*
+_(pulls NASA FIRMS + OpenStreetMap data, hands it downstream)_
 
 **Must-learn**
+
 1. **Python fundamentals** (if not already solid): functions, dictionaries/lists, list comprehensions, `try/except` error handling, f-strings, reading environment variables.
 2. **The `requests` library**: making a GET request, passing query parameters, handling a failed/timed-out request gracefully.
 3. **Pandas basics**: what a DataFrame is, filtering rows, merging two DataFrames, reading a CSV into one — NASA FIRMS data arrives as CSV.
@@ -29,9 +30,10 @@ Scope rule for this whole document: if it isn't something someone will actually 
 
 ## B. Analysis Engine workstream
 
-*(classification, persistence detection, the ML layer — the project's actual differentiator)*
+_(classification, persistence detection, the ML layer — the project's actual differentiator)_
 
 **Must-learn**
+
 1. Everything in Data & Ingestion's Python/Pandas/GeoPandas list above — this role can't function without that foundation, so it's a shared prerequisite, not a separate track.
 2. **DBSCAN, specifically**: what `eps` and `min_samples` control, and critically — what the `-1` "noise" label means and why it has to be excluded before scoring persistence. This isn't generic ML trivia here; it's the exact bug this project already had once.
 3. **Basic clustering/anomaly-detection vocabulary**: the difference between a clustering algorithm (DBSCAN) and an anomaly-scoring model (e.g. Isolation Forest), what a "feature" is, and the difference between training and inference.
@@ -45,6 +47,7 @@ Scope rule for this whole document: if it isn't something someone will actually 
 ## C. Backend/API workstream
 
 **Must-learn**
+
 1. **Python fundamentals + basic OOP** (classes) — both SQLAlchemy models and Pydantic schemas are class-based.
 2. **FastAPI basics**: defining a path operation, path vs. query parameters, request/response validation with Pydantic, running the app with `uvicorn`, and the auto-generated `/docs` page (genuinely useful for testing endpoints without a frontend).
 3. **SQLAlchemy ORM basics**: defining a model, opening a session, basic queries (filter, join). Nothing fancier is needed at this project's scale.
@@ -57,6 +60,7 @@ Scope rule for this whole document: if it isn't something someone will actually 
 ## D. Frontend workstream
 
 **Must-learn**
+
 1. **Modern JavaScript essentials**: `let`/`const`, arrow functions, destructuring, template literals, `async`/`await`, and `fetch` with Promises.
 2. **React fundamentals**: components, JSX, props, `useState`, `useEffect`, conditional rendering, rendering lists with keys. That's genuinely the whole list for a dashboard this size — don't chase more than that.
 3. **Mapbox GL JS basics**: initializing a map, adding a GeoJSON source and a layer, markers, popups, and click event handling — this is the map, the heatmap layer, and the zone overlay, which is most of this workstream's actual output.

@@ -1,10 +1,10 @@
-# AGENTS.md — SIH26162 Fire Detection Project
+# AGENTS.md — EMBER Fire Detection Project
 
 This file is intentionally short. It's the map, not the manual — read `RULES.md` for the actual coding standards, naming conventions, and domain-correctness rules before writing any code. This file just tells you where things are and what not to break.
 
 ## What this is
 
-An AI-based system for India that ingests NASA satellite fire/thermal-hotspot data, classifies each detection (industrial / wildfire / agricultural / unclassified) against OpenStreetMap zone data, detects persistent (non-transient) heat sources over time, and flags unexplained persistent sources for human review. Built for Smart India Hackathon problem statement SIH26162 (sponsor: NTRO).
+An AI-based system for India that ingests NASA satellite fire/thermal-hotspot data, classifies each detection (industrial / wildfire / agricultural / unclassified) against OpenStreetMap zone data, detects persistent (non-transient) heat sources over time, and flags unexplained persistent sources for human review. Built for Smart India Hackathon problem statement EMBER (sponsor: NTRO).
 
 ## Before you touch anything
 

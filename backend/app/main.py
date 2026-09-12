@@ -1,5 +1,5 @@
 """
-Main FastAPI application entrypoint for the SIH26162 fire-detection backend.
+Main FastAPI application entrypoint for the EMBER fire-detection backend.
 Mounts routers, coordinates startup inference loading and data processing,
 and configures global exception handling.
 """
@@ -92,7 +92,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="SIH26162 Fire Detection API",
+    title="EMBER Fire Detection API",
     lifespan=lifespan,
 )
 

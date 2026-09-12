@@ -1,5 +1,5 @@
 """
-NASA FIRMS ingestion client for the SIH26162 fire-detection pipeline.
+NASA FIRMS ingestion client for the EMBER fire-detection pipeline.
 
 Fetches VIIRS NRT fire/hotspot data for India from all three current satellite
 sources (Suomi NPP, NOAA-20, NOAA-21), normalises the merged CSV into

@@ -1,5 +1,5 @@
 """
-Historical data ingestion script for the SIH26162 fire-detection pipeline.
+Historical data ingestion script for the EMBER fire-detection pipeline.
 
 Fetches VIIRS NRT fire/hotspot data for India across historical date windows
 (using the FIRMS country/area CSV endpoint with explicit [DATE] parameters).

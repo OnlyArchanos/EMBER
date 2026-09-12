@@ -42,14 +42,14 @@ Aggregate numbers for the sidebar. Accepts the **same filters as `/api/fires`** 
 List of currently flagged Unexplained Persistent Sources.
 
 - Query params (optional): `status` (defaults to `open`).
-- Response: array of `FlaggedCase` objects, each including its linked `PersistentSource` summary (`first_seen`, `last_seen`, `days_active`, `member_count`, `status`).
+- Response: array of `FlaggedCase` objects, each including its linked `PersistentSource` summary (`id`, `cluster_id`, `centroid_latitude`, `centroid_longitude`, `first_seen`, `last_seen`, `days_active`, `member_count`, `status`).
 
 ## `GET /api/flags/{flag_id}`
 
 Full detail for one flagged case.
 
 - Path param: `flag_id` (integer).
-- Response: a single `FlaggedCase` object with its full linked `PersistentSource` and the list of member `FireDetection` records, or 404.
+- Response: a single `FlaggedCase` object with its full linked `PersistentSource` (including `id`, `cluster_id`, `centroid_latitude`, `centroid_longitude`, `first_seen`, `last_seen`, `days_active`, `member_count`, `status`) and the list of member `FireDetection` records, or 404.
 
 ## `PATCH /api/flags/{flag_id}`
 

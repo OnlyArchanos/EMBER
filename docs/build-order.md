@@ -58,11 +58,11 @@ Phases below (5-full, 6-full) are the original full-project scope, DEFERRED not 
 
 ## Prototype Phase 6 — Frontend (1-day scope, dark minimal UI)
 
-- [ ] `src/api/client.js`
-- [ ] `src/components/FireMap.jsx` (map + markers + zone overlay, combined)
-- [ ] `src/components/Sidebar.jsx` (stats, combined)
-- [ ] `src/components/FlaggedPanel.jsx`
-- [ ] `src/pages/Dashboard.jsx`
+- [x] `src/api/client.js`
+- [x] `src/components/FireMap.jsx` (map + markers + zone overlay, combined)
+- [x] `src/components/Sidebar.jsx` (stats, combined)
+- [x] `src/components/FlaggedPanel.jsx`
+- [x] `src/pages/Dashboard.jsx`
 
 ## Phase 5-full — API (deferred, original prompts in docs/phase5-prompts.md)
 

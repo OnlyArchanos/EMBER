@@ -147,6 +147,8 @@ class PersistentSourceSummaryOut(BaseModel):
 
     id: int
     cluster_id: int
+    centroid_latitude: Optional[float] = None
+    centroid_longitude: Optional[float] = None
     first_seen: datetime.date
     last_seen: datetime.date
     days_active: int
@@ -163,12 +165,15 @@ class PersistentSourceOut(BaseModel):
 
     id: int
     cluster_id: int
+    centroid_latitude: Optional[float] = None
+    centroid_longitude: Optional[float] = None
     first_seen: datetime.date
     last_seen: datetime.date
     days_active: int
     member_count: int
     zone_type_at_location: Optional[ZoneType]
     status: PersistentSourceStatus
+
 
 
 # ---------------------------------------------------------------------------

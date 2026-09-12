@@ -13,6 +13,7 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
+from sqlalchemy.orm import Session
 
 from app.services.osm_client import ADMIN_BOUNDARIES_PATH
 
@@ -202,3 +203,46 @@ def resolve_admin(
         )
 
     return result
+
+
+def geocode_fires(db: Session) -> int:
+    """Populate state and district for fire detections that currently have state=None.
+
+    Skips rows that already have a non-null state, making this safe and fast
+    to run on every startup. Returns the count of fire detections updated.
+    """
+    from app.models import FireDetection
+
+    unpopulated = (
+        db.query(FireDetection)
+        .filter(FireDetection.state.is_(None))
+        .all()
+    )
+    if not unpopulated:
+        logger.debug("geocode_fires: no fire detections with state=None; skipping.")
+        return 0
+
+    logger.info(
+        "geocode_fires: resolving state and district for %d fires...", len(unpopulated)
+    )
+    df = pd.DataFrame(
+        [
+            {"id": f.id, "latitude": f.latitude, "longitude": f.longitude}
+            for f in unpopulated
+        ]
+    )
+
+    resolved = resolve_admin(df)
+    id_to_fire = {f.id: f for f in unpopulated}
+    updated_count = 0
+
+    for _, row in resolved.iterrows():
+        fire = id_to_fire.get(row["id"])
+        if fire is not None and (row["state"] is not None or row["district"] is not None):
+            fire.state = row["state"]
+            fire.district = row["district"]
+            updated_count += 1
+
+    db.commit()
+    logger.info("geocode_fires: updated %d fires with state/district data.", updated_count)
+    return updated_count

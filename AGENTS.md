@@ -17,7 +17,7 @@ An AI-based system for India that ingests NASA satellite fire/thermal-hotspot da
 ## Tech stack
 
 - **Backend:** Python, FastAPI, SQLAlchemy, SQLite (dev/demo), GeoPandas, scikit-learn.
-- **Frontend:** React (Vite), Mapbox GL JS.
+- **Frontend:** React (Vite), MapLibre GL JS (switched from Mapbox GL JS — Mapbox now requires a credit card even for the free tier; MapLibre is the open-source fork and needs no card, paired with CARTO's free dark-style basemap, which needs only a free, instant, no-card API key).
 - **Scheduling:** APScheduler.
 - Use current stable versions when installing — don't copy a version pin from an old doc without checking it's still current.
 
@@ -57,6 +57,8 @@ docs/
   phase1-prompts.md, phase2-prompts.md, phase3-prompts.md, phase4-prompts.md,
   phase5-prompts.md — ready-to-use build + review prompts; later phases
   should get their own prompts file following the same pattern
+  phase5-prototype-prompts.md, phase6-prototype-prompts.md — prototype-
+  scoped prompts (lighter process, still real edge-case coverage)
   bootstrap-real-data.md — one-off operational runbook for producing the
   first real trained ML artifact and a real data/seed/ dataset from live
   NASA FIRMS / OSM data; run once when ready, not part of a build phase
@@ -86,7 +88,7 @@ npm run build
 - Nothing in the demo path depends on a live external API call succeeding — everything must run against `data/seed/`.
 - Classification/persistence/flagging changes require a test update in the same change.
 - No silent default categories — unmatched cases are `unclassified`, never folded into the nearest-sounding bucket.
-- Attribution (NASA / OpenStreetMap ODbL / Mapbox) stays visible in the UI, always.
+- Attribution (NASA / OpenStreetMap ODbL / CARTO) stays visible in the UI, always.
 
 ## When you're done with a change
 

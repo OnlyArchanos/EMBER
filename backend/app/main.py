@@ -18,6 +18,7 @@ from app.ml import infer
 from app.routers import fires, flags, health, stats, zones
 from app.services.classifier import classify_fires
 from app.services.flagging import run_flagging
+from app.services.geocode import geocode_fires
 from app.services.persistence import run_persistence
 
 logger = logging.getLogger(__name__)
@@ -43,11 +44,18 @@ async def lifespan(app: FastAPI):
         )
 
     # 2 & 3. Run analysis pipeline in order using SessionLocal directly.
-    # classify_fires and run_persistence run unconditionally.
+    # geocode_fires, classify_fires, and run_persistence run unconditionally.
     # run_flagging runs only if the model was loaded; otherwise it is skipped with a warning.
     # If any executed step raises, let startup fail loudly with the full error.
     db = SessionLocal()
     try:
+        geocoded_count = geocode_fires(db)
+        if geocoded_count > 0:
+            logger.info(
+                "Startup geocoding completed: %d fires geocoded",
+                geocoded_count,
+            )
+
         classified_count = classify_fires(db)
         logger.info(
             "Startup classification completed: %d fires classified",

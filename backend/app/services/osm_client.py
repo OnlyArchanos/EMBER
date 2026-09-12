@@ -21,7 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
-from shapely.geometry import shape
+from shapely.geometry import LineString, mapping, shape
+from shapely.ops import linemerge, polygonize, unary_union
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -440,13 +441,21 @@ def _parse_overpass_to_features(
         if el.get("type") == "node" and "lat" in el and "lon" in el:
             nodes[el["id"]] = (el["lon"], el["lat"])
 
+    # Build a way_id -> coords lookup for assembling relation geometries.
+    ways: dict[int, list[tuple[float, float]]] = {}
+    for el in elements:
+        if el.get("type") == "way":
+            coords = [nodes[nid] for nid in el.get("nodes", []) if nid in nodes]
+            if len(coords) >= 2:
+                ways[el["id"]] = coords
+
     features: list[dict] = []
 
     for el in elements:
         el_type = el.get("type")
         osm_id = f"{el_type}/{el['id']}"
         tags: dict = el.get("tags", {})
-        name: str | None = tags.get("name")
+        name: str | None = tags.get("name") or tags.get("name:en")
 
         geometry: dict | None = None
 
@@ -456,9 +465,7 @@ def _parse_overpass_to_features(
                 geometry = {"type": "Polygon", "coordinates": [coords]}
 
         elif el_type == "relation":
-            outer_coords = _assemble_relation_ring(el, nodes)
-            if outer_coords and len(outer_coords) >= 4:
-                geometry = {"type": "Polygon", "coordinates": [outer_coords]}
+            geometry = _assemble_relation_geometry(el, nodes, ways)
 
         if geometry is None:
             continue
@@ -480,6 +487,59 @@ def _parse_overpass_to_features(
         )
 
     return features
+
+
+def _assemble_relation_geometry(
+    relation: dict,
+    nodes: dict[int, tuple[float, float]],
+    ways: dict[int, list[tuple[float, float]]] | None = None,
+) -> dict | None:
+    """Assemble polygon or multipolygon geometry for an Overpass relation.
+
+    Handles outer member ways (either inline geometry/nodes or member way references).
+    Uses shapely linemerge + polygonize for robust boundary reconstruction.
+    """
+    ways = ways or {}
+    outer_lines: list[LineString] = []
+
+    for member in relation.get("members", []):
+        if member.get("type") != "way" or member.get("role") != "outer":
+            continue
+        way_nodes = member.get("geometry", [])
+        if way_nodes:
+            coords = [(n["lon"], n["lat"]) for n in way_nodes if "lon" in n]
+        elif "nodes" in member and member["nodes"]:
+            coords = [nodes[nid] for nid in member["nodes"] if nid in nodes]
+        elif member.get("ref") in ways:
+            coords = ways[member["ref"]]
+        else:
+            coords = []
+
+        if len(coords) >= 2:
+            outer_lines.append(LineString(coords))
+
+    if not outer_lines:
+        return None
+
+    try:
+        merged = linemerge(outer_lines)
+        polys = list(polygonize(merged))
+        if not polys:
+            # Fallback to linear ring assembly
+            ring = _assemble_relation_ring(relation, nodes)
+            if ring and len(ring) >= 4:
+                return {"type": "Polygon", "coordinates": [ring]}
+            return None
+
+        union_geom = unary_union(polys)
+        if union_geom.is_empty:
+            return None
+        if not union_geom.is_valid:
+            union_geom = union_geom.buffer(0)
+        return mapping(union_geom)
+    except Exception as exc:
+        logger.debug("Failed assembling relation geometry: %s", exc)
+        return None
 
 
 def _assemble_relation_ring(

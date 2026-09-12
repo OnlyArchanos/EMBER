@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind v4 @theme block.
+ * All colors reference CSS custom properties set at runtime by main.jsx
+ * from theme.js — no hex values in this file.
+ */
+@theme {
+  --color-background:       var(--theme-background);
+  --color-panel:            var(--theme-panel);
+  --color-border:           var(--theme-border);
+  --color-text-primary:     var(--theme-text-primary);
+  --color-text-muted:       var(--theme-text-muted);
+  --color-accent:           var(--theme-accent);
+
+  --color-fire-industrial:   var(--theme-fire-industrial);
+  --color-fire-wildfire:     var(--theme-fire-wildfire);
+  --color-fire-agricultural: var(--theme-fire-agricultural);
+  --color-fire-unclassified: var(--theme-fire-unclassified);
+  --color-status-reviewed:   var(--theme-status-reviewed);
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
